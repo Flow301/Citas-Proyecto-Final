@@ -13,6 +13,10 @@ const navigationItems = [
     label: "Mi perfil",
     path: "/perfil",
   },
+  {
+  label: "Servicios",
+  path: "/servicios",
+  },
 ]
 
 export function MainLayout() {

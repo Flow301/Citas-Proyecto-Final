@@ -6,6 +6,8 @@ import { LoginPage } from "@/pages/LoginPage"
 import { NotFoundPage } from "@/pages/NotFoundPage"
 import { ProfilePage } from "@/pages/ProfilePage"
 import { RegisterPage } from "@/pages/RegisterPage"
+import { ServiceDetailPage } from "@/pages/ServiceDetailPage"
+import { ServicesPage } from "@/pages/ServicesPage"
 
 function App() {
   return (
@@ -22,6 +24,8 @@ function App() {
       >
         <Route index element={<DashboardPage />} />
         <Route path="/perfil" element={<ProfilePage />} />
+        <Route path="/servicios" element={<ServicesPage />} />
+        <Route path="/servicios/:id" element={<ServiceDetailPage />} />
       </Route>
 
       <Route path="*" element={<NotFoundPage />} />

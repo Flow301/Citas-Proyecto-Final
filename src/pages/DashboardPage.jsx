@@ -1,48 +1,54 @@
 import { useAuth } from "@/context/auth-context"
-import { Button } from "@/components/ui/button"
 import {
   Card,
   CardContent,
+  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
 
-export function DashboardPage() {
-  const { user, logout } = useAuth()
+const roleDescriptions = {
+  Administrador:
+    "Desde aquí podrás administrar servicios, empleados, citas y consultar la agenda completa.",
+  Empleado:
+    "Desde aquí podrás consultar tus citas, agenda y servicios asignados.",
+  Cliente:
+    "Desde aquí podrás consultar tus citas y cancelar las que se encuentren pendientes.",
+}
 
-  const fullName = [
-    user.nombre,
-    user.primerApellido,
-    user.segundoApellido,
-  ]
-    .filter(Boolean)
-    .join(" ")
+export function DashboardPage() {
+  const { user } = useAuth()
+
+  const firstName = user.nombre || "Usuario"
+  const roleName = user.rol?.nombre
 
   return (
-    <main className="min-h-screen bg-muted p-4 sm:p-8">
-      <Card className="mx-auto max-w-2xl">
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight">
+          Bienvenido, {firstName}
+        </h1>
+
+        <p className="text-muted-foreground">
+          Panel principal del Centro de Tutorías Académicas.
+        </p>
+      </div>
+
+      <Card className="max-w-3xl">
         <CardHeader>
-          <CardTitle>Bienvenido, {fullName}</CardTitle>
+          <CardTitle>Resumen de tu cuenta</CardTitle>
+          <CardDescription>
+            Has iniciado sesión como {roleName || "usuario"}.
+          </CardDescription>
         </CardHeader>
 
-        <CardContent className="space-y-4">
-          <div>
-            <p className="text-sm text-muted-foreground">
-              Correo electrónico
-            </p>
-            <p>{user.correo}</p>
-          </div>
-
-          <div>
-            <p className="text-sm text-muted-foreground">Rol</p>
-            <p>{user.rol?.nombre || "Sin rol asignado"}</p>
-          </div>
-
-          <Button variant="outline" onClick={logout}>
-            Cerrar sesión
-          </Button>
+        <CardContent>
+          <p className="text-sm leading-6">
+            {roleDescriptions[roleName] ||
+              "Consulta las opciones disponibles en la navegación principal."}
+          </p>
         </CardContent>
       </Card>
-    </main>
+    </div>
   )
 }

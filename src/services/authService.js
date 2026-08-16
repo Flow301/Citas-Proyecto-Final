@@ -12,3 +12,10 @@ export async function getAuthenticatedProfile() {
     method: "GET",
   })
 }
+
+export async function registerClient(clientData) {
+  return apiRequest("/usuarios/registro", {
+    method: "POST",
+    body: JSON.stringify(clientData),
+  })
+}

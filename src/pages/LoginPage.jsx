@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { Navigate, useNavigate } from "react-router"
+import { Link, Navigate, useNavigate } from "react-router"
 import { useAuth } from "@/context/auth-context"
 import { Button } from "@/components/ui/button"
 import {
@@ -186,6 +186,15 @@ export function LoginPage() {
             >
               {submitting ? "Iniciando sesión..." : "Iniciar sesión"}
             </Button>
+
+            <div className="text-center">
+              <Button
+                variant="link"
+                render={<Link to="/registro" />}
+              >
+                Crear una cuenta
+              </Button>
+            </div>
           </form>
         </CardContent>
       </Card>

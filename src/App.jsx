@@ -1,23 +1,25 @@
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Route, Routes } from "react-router"
+import { ProtectedRoute } from "@/components/auth/ProtectedRoute"
+import { DashboardPage } from "@/pages/DashboardPage"
+import { LoginPage } from "@/pages/LoginPage"
+import { NotFoundPage } from "@/pages/NotFoundPage"
 
 function App() {
   return (
-    <main className="flex min-h-screen items-center justify-center bg-muted p-6">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle>Centro de Tutorías Académicas</CardTitle>
-        </CardHeader>
+    <Routes>
+      <Route path="/login" element={<LoginPage />} />
 
-        <CardContent>
-          <p className="mb-4 text-sm text-muted-foreground">
-            Sistema de gestión de citas para estudiantes y tutores.
-          </p>
+      <Route
+        path="/"
+        element={
+          <ProtectedRoute>
+            <DashboardPage />
+          </ProtectedRoute>
+        }
+      />
 
-          <Button>Comenzar</Button>
-        </CardContent>
-      </Card>
-    </main>
+      <Route path="*" element={<NotFoundPage />} />
+    </Routes>
   )
 }
 

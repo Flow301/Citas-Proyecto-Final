@@ -12,6 +12,8 @@ import {
 import { Skeleton } from "@/components/ui/skeleton"
 import { getEmployees } from "@/services/employeeService"
 import { getSpecialties } from "@/services/serviceService"
+import { Link } from "react-router"
+import { useAuth } from "@/context/auth-context"
 
 async function requestEmployeesData() {
   const [employeesResponse, specialtiesResponse] =
@@ -37,6 +39,9 @@ function getEmployeeName(employee) {
 }
 
 export function EmployeesPage() {
+  const { user } = useAuth()
+  const isAdministrator =
+    user.rol?.nombre === "Administrador"
   const [employees, setEmployees] = useState([])
   const [specialties, setSpecialties] = useState([])
   const [sortOrder, setSortOrder] = useState("nombre-asc")
@@ -137,30 +142,41 @@ export function EmployeesPage() {
           </p>
         </div>
 
-        <div className="w-full sm:w-56">
-          <Select value={sortOrder} onValueChange={setSortOrder}>
-            <SelectTrigger aria-label="Ordenar empleados">
-              <SelectValue placeholder="Ordenar por" />
-            </SelectTrigger>
+        <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
+          {isAdministrator && (
+            <Button
+              nativeButton={false}
+              render={<Link to="/empleados/nuevo" />}
+            >
+              Crear empleado
+            </Button>
+          )}
 
-            <SelectContent>
-              <SelectItem value="nombre-asc">
-                Nombre: A-Z
-              </SelectItem>
+          <div className="w-full sm:w-56">
+            <Select value={sortOrder} onValueChange={setSortOrder}>
+              <SelectTrigger aria-label="Ordenar empleados">
+                <SelectValue placeholder="Ordenar por" />
+              </SelectTrigger>
 
-              <SelectItem value="nombre-desc">
-                Nombre: Z-A
-              </SelectItem>
+              <SelectContent>
+                <SelectItem value="nombre-asc">
+                  Nombre: A-Z
+                </SelectItem>
 
-              <SelectItem value="codigo-asc">
-                Código: A-Z
-              </SelectItem>
+                <SelectItem value="nombre-desc">
+                  Nombre: Z-A
+                </SelectItem>
 
-              <SelectItem value="codigo-desc">
-                Código: Z-A
-              </SelectItem>
-            </SelectContent>
-          </Select>
+                <SelectItem value="codigo-asc">
+                  Código: A-Z
+                </SelectItem>
+
+                <SelectItem value="codigo-desc">
+                  Código: Z-A
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       </div>
 

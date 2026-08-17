@@ -1,5 +1,6 @@
 import fs from "node:fs"
 import path from "node:path"
+import process from "node:process"
 
 loadSeedEnvironment()
 
@@ -49,6 +50,13 @@ const employeeUsers = [
     correo: "mariana.empleada@tutorias.test",
     telefono: "8801-2003",
   },
+  {
+  nombre: "Luis",
+  primerApellido: "Chaves",
+  segundoApellido: "Alvarado",
+  correo: "luis.empleado@tutorias.test",
+  telefono: "8801-2004",
+},
 ]
 
 const employeeProfiles = [
@@ -496,7 +504,7 @@ async function apiRequest(endpoint, options = {}) {
     headers,
   })
 
-  let result = null
+  let result
 
   try {
     result = await response.json()

@@ -15,6 +15,9 @@ import { CreateAdditionalServicePage } from "@/pages/CreateAdditionalServicePage
 import { AdditionalServiceDetailPage } from "@/pages/AdditionalServiceDetailPage"
 import { EditAdditionalServicePage } from "@/pages/EditAdditionalServicePage"
 import { EmployeesPage } from "@/pages/EmployeesPage"
+import { EmployeeDetailPage } from "@/pages/EmployeeDetailPage"
+import { CreateEmployeePage } from "@/pages/CreateEmployeePage"
+import { EditEmployeePage } from "@/pages/EditEmployeePage"
 
 function App() {
   return (
@@ -93,10 +96,39 @@ function App() {
           }
         />
 
+        <Route
+          path="/empleados/nuevo"
+          element={
+            <RoleRoute allowedRoles={["Administrador"]}>
+              <CreateEmployeePage />
+            </RoleRoute>
+          }
+        />
+
+        <Route
+          path="/empleados/:id/editar"
+          element={
+            <RoleRoute allowedRoles={["Administrador"]}>
+              <EditEmployeePage />
+            </RoleRoute>
+          }
+        />
+
+        <Route
+          path="/empleados/:id"
+          element={
+            <RoleRoute
+              allowedRoles={["Administrador", "Empleado"]}
+            >
+              <EmployeeDetailPage />
+            </RoleRoute>
+          }
+        />
 
 
 
-        
+
+
       </Route>
 
       <Route path="*" element={<NotFoundPage />} />

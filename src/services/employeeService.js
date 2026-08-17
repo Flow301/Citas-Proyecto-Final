@@ -6,6 +6,12 @@ export async function getEmployees() {
   })
 }
 
+export async function getEmployeeUsers() {
+  return apiRequest("/usuarios?rol=Empleado", {
+    method: "GET",
+  })
+}
+
 export async function getEmployeeById(employeeId) {
   return apiRequest(`/empleados/${employeeId}`, {
     method: "GET",

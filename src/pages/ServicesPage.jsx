@@ -3,6 +3,8 @@ import { ServiceCard } from "@/components/services/ServiceCard"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
+import { Link } from "react-router"
+import { useAuth } from "@/context/auth-context"
 import {
   Select,
   SelectContent,
@@ -33,50 +35,52 @@ export function ServicesPage() {
   const [sortOrder, setSortOrder] = useState("nombre-asc")
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
+  const { user } = useAuth()
+  const isAdministrator = user.rol?.nombre === "Administrador"
 
   async function loadData() {
-  setLoading(true)
-  setError("")
+    setLoading(true)
+    setError("")
 
-  try {
-    const data = await requestServicesData()
-
-    setServices(data.services)
-    setSpecialties(data.specialties)
-  } catch (requestError) {
-    setError(requestError.message)
-  } finally {
-    setLoading(false)
-  }
-}
-
-  useEffect(() => {
-  let isActive = true
-
-  requestServicesData()
-    .then((data) => {
-      if (!isActive) {
-        return
-      }
+    try {
+      const data = await requestServicesData()
 
       setServices(data.services)
       setSpecialties(data.specialties)
-    })
-    .catch((requestError) => {
-      if (isActive) {
-        setError(requestError.message)
-      }
-    })
-    .finally(() => {
-      if (isActive) {
-        setLoading(false)
-      }
-    })
-
-  return () => {
-    isActive = false
+    } catch (requestError) {
+      setError(requestError.message)
+    } finally {
+      setLoading(false)
+    }
   }
-}, [])
+
+  useEffect(() => {
+    let isActive = true
+
+    requestServicesData()
+      .then((data) => {
+        if (!isActive) {
+          return
+        }
+
+        setServices(data.services)
+        setSpecialties(data.specialties)
+      })
+      .catch((requestError) => {
+        if (isActive) {
+          setError(requestError.message)
+        }
+      })
+      .finally(() => {
+        if (isActive) {
+          setLoading(false)
+        }
+      })
+
+    return () => {
+      isActive = false
+    }
+  }, [])
   const specialtiesById = useMemo(
     () =>
       Object.fromEntries(
@@ -124,27 +128,38 @@ export function ServicesPage() {
           </p>
         </div>
 
-        <div className="w-full sm:w-56">
-          <Select value={sortOrder} onValueChange={setSortOrder}>
-            <SelectTrigger aria-label="Ordenar servicios">
-              <SelectValue placeholder="Ordenar por" />
-            </SelectTrigger>
+        <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
+          {isAdministrator && (
+            <Button
+              nativeButton={false}
+              render={<Link to="/servicios/nuevo" />}
+            >
+              Crear servicio
+            </Button>
+          )}
 
-            <SelectContent>
-              <SelectItem value="nombre-asc">
-                Nombre: A-Z
-              </SelectItem>
-              <SelectItem value="nombre-desc">
-                Nombre: Z-A
-              </SelectItem>
-              <SelectItem value="precio-asc">
-                Menor precio
-              </SelectItem>
-              <SelectItem value="precio-desc">
-                Mayor precio
-              </SelectItem>
-            </SelectContent>
-          </Select>
+          <div className="w-full sm:w-56">
+            <Select value={sortOrder} onValueChange={setSortOrder}>
+              <SelectTrigger aria-label="Ordenar servicios">
+                <SelectValue placeholder="Ordenar por" />
+              </SelectTrigger>
+
+              <SelectContent>
+                <SelectItem value="nombre-asc">
+                  Nombre: A-Z
+                </SelectItem>
+                <SelectItem value="nombre-desc">
+                  Nombre: Z-A
+                </SelectItem>
+                <SelectItem value="precio-asc">
+                  Menor precio
+                </SelectItem>
+                <SelectItem value="precio-desc">
+                  Mayor precio
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       </div>
 

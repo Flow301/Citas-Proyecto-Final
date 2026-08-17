@@ -2,6 +2,7 @@ import { useEffect, useState } from "react"
 import { Link, useParams } from "react-router"
 import { ActiveStatusBadge } from "@/components/common/ActiveStatusBadge"
 import { Button } from "@/components/ui/button"
+import { useAuth } from "@/context/auth-context"
 import {
   Card,
   CardContent,
@@ -10,10 +11,23 @@ import {
 } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
+  changeServiceStatus,
   getServiceById,
   getServiceImageUrl,
   getSpecialties,
 } from "@/services/serviceService"
+
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 
 function formatPrice(price) {
   return new Intl.NumberFormat("es-CR", {
@@ -28,6 +42,10 @@ export function ServiceDetailPage() {
   const [specialtyName, setSpecialtyName] = useState("")
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
+  const [changingStatus, setChangingStatus] = useState(false)
+  const [statusError, setStatusError] = useState("")
+  const { user } = useAuth()
+  const isAdministrator = user.rol?.nombre === "Administrador"
 
   useEffect(() => {
     async function loadService() {
@@ -58,6 +76,26 @@ export function ServiceDetailPage() {
 
     loadService()
   }, [id])
+
+  async function handleStatusChange() {
+    const newStatus = !service.activo
+
+    setChangingStatus(true)
+    setStatusError("")
+
+    try {
+      await changeServiceStatus(service.id, newStatus)
+
+      setService((currentService) => ({
+        ...currentService,
+        activo: newStatus,
+      }))
+    } catch (requestError) {
+      setStatusError(requestError.message)
+    } finally {
+      setChangingStatus(false)
+    }
+  }
 
   if (loading) {
     return (
@@ -95,9 +133,83 @@ export function ServiceDetailPage() {
 
   return (
     <div className="space-y-4">
-      <Button variant="outline" render={<Link to="/servicios" />}>
-        Volver a servicios
-      </Button>
+      <div className="flex flex-wrap justify-between gap-3">
+        <Button
+          nativeButton={false}
+          variant="outline"
+          render={<Link to="/servicios" />}
+        >
+          Volver a servicios
+        </Button>
+
+        {isAdministrator && (
+          <div className="flex flex-wrap gap-3">
+            <Button
+              nativeButton={false}
+              variant="outline"
+              render={<Link to={`/servicios/${service.id}/editar`} />}
+            >
+              Editar servicio
+            </Button>
+
+            <AlertDialog>
+              <AlertDialogTrigger
+                render={
+                  <Button
+                    type="button"
+                    variant={service.activo ? "destructive" : "default"}
+                    disabled={changingStatus}
+                  />
+                }
+              >
+                {changingStatus
+                  ? "Actualizando..."
+                  : service.activo
+                    ? "Desactivar servicio"
+                    : "Activar servicio"}
+              </AlertDialogTrigger>
+
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>
+                    {service.activo
+                      ? "¿Desactivar este servicio?"
+                      : "¿Activar este servicio?"}
+                  </AlertDialogTitle>
+
+                  <AlertDialogDescription>
+                    {service.activo
+                      ? "El servicio dejará de estar disponible para registrar nuevas citas."
+                      : "El servicio volverá a estar disponible para registrar nuevas citas."}
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+
+                <AlertDialogFooter>
+                  <AlertDialogCancel disabled={changingStatus}>
+                    Cancelar
+                  </AlertDialogCancel>
+
+                  <AlertDialogAction
+                    onClick={handleStatusChange}
+                    disabled={changingStatus}
+                  >
+                    Confirmar
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
+        )}
+      </div>
+
+      {statusError && (
+        <div
+          role="alert"
+          className="rounded-md border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive"
+        >
+          {statusError}
+        </div>
+      )}
 
       <Card className="mx-auto max-w-4xl overflow-hidden">
         {imageUrl ? (

@@ -21,11 +21,22 @@ const navigationItems = [
     label: "Adicionales",
     path: "/servicios-adicionales",
   },
+  {
+    label: "Empleados",
+    path: "/empleados",
+    roles: ["Administrador", "Empleado"],
+  },
 ]
 
 export function MainLayout() {
   const navigate = useNavigate()
   const { user, logout } = useAuth()
+
+  const visibleNavigationItems = navigationItems.filter(
+  (item) =>
+    !item.roles ||
+    item.roles.includes(user.rol?.nombre)
+)
 
   const fullName = [user.nombre, user.primerApellido]
     .filter(Boolean)
@@ -80,7 +91,7 @@ export function MainLayout() {
             aria-label="Navegación principal"
             className="flex flex-wrap gap-2"
           >
-            {navigationItems.map((item) => (
+            {visibleNavigationItems.map((item) => (
               <NavLink
                 key={item.path}
                 to={item.path}

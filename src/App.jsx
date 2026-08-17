@@ -10,6 +10,10 @@ import { RegisterPage } from "@/pages/RegisterPage"
 import { ServiceDetailPage } from "@/pages/ServiceDetailPage"
 import { ServiceFormPage } from "@/pages/ServiceFormPage"
 import { ServicesPage } from "@/pages/ServicesPage"
+import { AdditionalServicesPage } from "@/pages/AdditionalServicesPage"
+import { CreateAdditionalServicePage } from "@/pages/CreateAdditionalServicePage"
+import { AdditionalServiceDetailPage } from "@/pages/AdditionalServiceDetailPage"
+import { EditAdditionalServicePage } from "@/pages/EditAdditionalServicePage"
 
 function App() {
   return (
@@ -27,6 +31,33 @@ function App() {
         <Route index element={<DashboardPage />} />
         <Route path="/perfil" element={<ProfilePage />} />
         <Route path="/servicios" element={<ServicesPage />} />
+
+        <Route
+          path="/servicios-adicionales"
+          element={<AdditionalServicesPage />}
+        />
+
+        <Route
+          path="/servicios-adicionales/nuevo"
+          element={
+            <RoleRoute allowedRoles={["Administrador"]}>
+              <CreateAdditionalServicePage />
+            </RoleRoute>
+          }
+        />
+        <Route
+          path="/servicios-adicionales/:id/editar"
+          element={
+            <RoleRoute allowedRoles={["Administrador"]}>
+              <EditAdditionalServicePage />
+            </RoleRoute>
+          }
+        />
+        <Route
+          path="/servicios-adicionales/:id"
+          element={<AdditionalServiceDetailPage />}
+        />
+
         <Route
           path="/servicios/nuevo"
           element={
@@ -35,6 +66,7 @@ function App() {
             </RoleRoute>
           }
         />
+
         <Route
           path="/servicios/:id/editar"
           element={
@@ -43,6 +75,7 @@ function App() {
             </RoleRoute>
           }
         />
+
         <Route
           path="/servicios/:id"
           element={<ServiceDetailPage />}

@@ -14,8 +14,12 @@ const navigationItems = [
     path: "/perfil",
   },
   {
-  label: "Servicios",
-  path: "/servicios",
+    label: "Servicios",
+    path: "/servicios",
+  },
+  {
+    label: "Adicionales",
+    path: "/servicios-adicionales",
   },
 ]
 

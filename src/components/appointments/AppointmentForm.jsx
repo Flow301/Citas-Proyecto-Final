@@ -7,6 +7,10 @@ import {
 } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { useMemo } from "react"
+import { calculateAvailableTimeSlots } from "@/lib/appointmentCalculations"
+
+const EMPTY_LIST = []
 
 function formatPrice(price) {
   return new Intl.NumberFormat("es-CR", {
@@ -29,6 +33,20 @@ function getFullName(user) {
     .join(" ")
 }
 
+function formatTime(timeValue) {
+  if (!timeValue) {
+    return "No disponible"
+  }
+
+  const value = String(timeValue)
+
+  if (value.includes("T")) {
+    return value.slice(11, 16)
+  }
+
+  return value.slice(0, 5)
+}
+
 function FieldError({ error }) {
   if (!error) {
     return null
@@ -42,6 +60,7 @@ function FieldError({ error }) {
 }
 
 export function AppointmentForm({
+  appointmentId,
   title,
   formData,
   clients,
@@ -51,6 +70,7 @@ export function AppointmentForm({
   calculations,
   endTime,
   agenda,
+  dailyAgenda,
   errors,
   loadingEmployees,
   loadingAgenda,
@@ -59,8 +79,31 @@ export function AppointmentForm({
   onAdditionalChange,
   onSubmit,
 }) {
-  const appointments = agenda?.citas ?? []
-  const restrictions = agenda?.restricciones ?? []
+  const appointments = agenda?.citas ?? EMPTY_LIST
+  const restrictions = agenda?.restricciones ?? EMPTY_LIST
+  const schedules = dailyAgenda?.horarios ?? EMPTY_LIST
+  const generalRestrictions =
+    dailyAgenda?.restriccionesGenerales ?? EMPTY_LIST
+
+  const availableTimeSlots = useMemo(
+    () =>
+      calculateAvailableTimeSlots({
+        schedules,
+        appointments,
+        generalRestrictions,
+        employeeRestrictions: restrictions,
+        durationMinutes: calculations.durationMinutes,
+        excludedAppointmentId: appointmentId,
+      }),
+    [
+      schedules,
+      appointments,
+      generalRestrictions,
+      restrictions,
+      calculations.durationMinutes,
+      appointmentId,
+    ]
+  )
 
   return (
     <form onSubmit={onSubmit} className="space-y-6">
@@ -195,9 +238,8 @@ export function AppointmentForm({
               <span className="text-destructive">*</span>
             </Label>
 
-            <Input
+            <select
               id="horaInicio"
-              type="time"
               value={formData.horaInicio}
               onChange={(event) =>
                 onFieldChange(
@@ -205,8 +247,29 @@ export function AppointmentForm({
                   event.target.value
                 )
               }
+              disabled={
+                !formData.servicioId ||
+                !formData.empleadoId ||
+                !formData.fecha ||
+                loadingAgenda
+              }
+              className="h-10 w-full rounded-md border bg-background px-3 text-sm disabled:opacity-50"
               aria-invalid={Boolean(errors.horaInicio)}
-            />
+            >
+              <option value="">
+                {loadingAgenda
+                  ? "Calculando horarios..."
+                  : availableTimeSlots.length === 0
+                    ? "No hay horarios disponibles"
+                    : "Selecciona una hora"}
+              </option>
+
+              {availableTimeSlots.map((time) => (
+                <option key={time} value={time}>
+                  {time}
+                </option>
+              ))}
+            </select>
 
             <FieldError error={errors.horaInicio} />
           </div>
@@ -301,6 +364,54 @@ export function AppointmentForm({
             </p>
           ) : (
             <>
+              <div>
+                <p className="font-medium">
+                  Horario general del establecimiento
+                </p>
+
+                {schedules.length === 0 ? (
+                  <p className="text-sm text-destructive">
+                    El establecimiento no atiende en esta fecha.
+                  </p>
+                ) : (
+                  schedules.map((schedule) => (
+                    <p
+                      key={schedule.id}
+                      className="text-sm text-muted-foreground"
+                    >
+                      {String(schedule.horaInicio).slice(0, 5)} -{" "}
+                      {String(schedule.horaFin).slice(0, 5)}
+                    </p>
+                  ))
+                )}
+              </div>
+
+              {generalRestrictions.length > 0 && (
+                <div className="space-y-2">
+                  <p className="font-medium">
+                    Restricciones generales
+                  </p>
+
+                  {generalRestrictions.map((restriction) => (
+                    <div
+                      key={restriction.id}
+                      className="rounded-md border border-red-200 bg-red-50 p-3"
+                    >
+                      <p className="text-sm text-red-700">
+                        {restriction.todoElDia
+                          ? "Todo el día"
+                          : `${formatTime(
+                            restriction.horaInicio
+                          )} - ${formatTime(restriction.horaFin)}`}
+                      </p>
+
+                      <p className="text-sm text-red-700">
+                        {restriction.motivo}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
               <p>
                 Citas asignadas:{" "}
                 <strong>{appointments.length}</strong>
@@ -321,15 +432,8 @@ export function AppointmentForm({
                   </p>
 
                   <p className="text-sm text-muted-foreground">
-                    {String(appointment.horaInicio).slice(
-                      11,
-                      16
-                    )}{" "}
-                    -{" "}
-                    {String(appointment.horaFin).slice(
-                      11,
-                      16
-                    )}
+                    {formatTime(appointment.horaInicio)} -{" "}
+                    {formatTime(appointment.horaFin)}
                   </p>
                 </div>
               ))}

@@ -50,6 +50,11 @@ const navigationItems = [
   path: "/citas",
   roles: ["Cliente"],
 },
+{
+  label: "Agenda diaria",
+  path: "/agenda-diaria",
+  roles: ["Administrador"],
+},
 ]
 
 export function MainLayout() {

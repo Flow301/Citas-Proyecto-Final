@@ -20,6 +20,7 @@ import {
   getActiveServicesForAppointments,
   getAppointmentEmployeeAgenda,
   getClients,
+  getDailyAppointmentAgenda,
 } from "@/services/appointmentService"
 
 const initialFormData = {
@@ -60,6 +61,8 @@ export function CreateAppointmentPage() {
   const [pendingStatusId, setPendingStatusId] =
     useState(null)
   const [agenda, setAgenda] = useState(null)
+  const [dailyAgenda, setDailyAgenda] =
+    useState(null)
   const [errors, setErrors] = useState({})
   const [loading, setLoading] = useState(true)
   const [loadingEmployees, setLoadingEmployees] =
@@ -125,36 +128,36 @@ export function CreateAppointmentPage() {
   }, [])
 
   useEffect(() => {
-    if (!formData.servicioId) {
-      return undefined
-    }
+  if (!formData.servicioId) {
+    return undefined
+  }
 
-    let isActive = true
+  let isActive = true
 
-    getActiveEmployeesForService(formData.servicioId)
-      .then((response) => {
-        if (isActive) {
-          setEmployees(response.data ?? [])
-        }
-      })
-      .catch((requestError) => {
-        if (isActive) {
-          setErrors((currentErrors) => ({
-            ...currentErrors,
-            empleadoId: requestError.message,
-          }))
-        }
-      })
-      .finally(() => {
-        if (isActive) {
-          setLoadingEmployees(false)
-        }
-      })
+  getActiveEmployeesForService(formData.servicioId)
+    .then((response) => {
+      if (isActive) {
+        setEmployees(response.data ?? [])
+      }
+    })
+    .catch((requestError) => {
+      if (isActive) {
+        setErrors((currentErrors) => ({
+          ...currentErrors,
+          empleadoId: requestError.message,
+        }))
+      }
+    })
+    .finally(() => {
+      if (isActive) {
+        setLoadingEmployees(false)
+      }
+    })
 
-    return () => {
-      isActive = false
-    }
-  }, [formData.servicioId])
+  return () => {
+    isActive = false
+  }
+}, [formData.servicioId])
 
   useEffect(() => {
     if (!formData.empleadoId || !formData.fecha) {
@@ -163,15 +166,24 @@ export function CreateAppointmentPage() {
 
     let isActive = true
 
-    getAppointmentEmployeeAgenda(
-      formData.empleadoId,
-      formData.fecha
-    )
-      .then((response) => {
-        if (isActive) {
-          setAgenda(response.data)
+    Promise.all([
+      getAppointmentEmployeeAgenda(
+        formData.empleadoId,
+        formData.fecha
+      ),
+      getDailyAppointmentAgenda(formData.fecha),
+    ])
+      .then(
+        ([
+          employeeAgendaResponse,
+          dailyAgendaResponse,
+        ]) => {
+          if (isActive) {
+            setAgenda(employeeAgendaResponse.data)
+            setDailyAgenda(dailyAgendaResponse.data)
+          }
         }
-      })
+      )
       .catch((requestError) => {
         if (isActive) {
           setErrors((currentErrors) => ({
@@ -225,40 +237,41 @@ export function CreateAppointmentPage() {
   )
 
   function handleFieldChange(field, value) {
-    setFormData((currentData) => {
-      if (field === "servicioId") {
-        setEmployees([])
-        setAgenda(null)
-        setLoadingEmployees(Boolean(value))
+    if (field === "servicioId") {
+      setEmployees([])
+      setAgenda(null)
+      setDailyAgenda(null)
+      setLoadingEmployees(Boolean(value))
 
-        return {
-          ...currentData,
-          servicioId: value,
-          empleadoId: "",
-        }
-      }
-
+      setFormData((currentData) => ({
+        ...currentData,
+        servicioId: value,
+        empleadoId: "",
+      }))
+    } else {
       if (field === "empleadoId") {
         setAgenda(null)
+        setDailyAgenda(null)
 
-        if (value && currentData.fecha) {
+        if (value && formData.fecha) {
           setLoadingAgenda(true)
         }
       }
 
       if (field === "fecha") {
         setAgenda(null)
+        setDailyAgenda(null)
 
-        if (value && currentData.empleadoId) {
+        if (value && formData.empleadoId) {
           setLoadingAgenda(true)
         }
       }
 
-      return {
+      setFormData((currentData) => ({
         ...currentData,
         [field]: value,
-      }
-    })
+      }))
+    }
 
     setErrors((currentErrors) => ({
       ...currentErrors,
@@ -277,8 +290,8 @@ export function CreateAppointmentPage() {
       adicionalIds: checked
         ? [...currentData.adicionalIds, additionalId]
         : currentData.adicionalIds.filter(
-            (id) => id !== additionalId
-          ),
+          (id) => id !== additionalId
+        ),
     }))
   }
 
@@ -367,7 +380,7 @@ export function CreateAppointmentPage() {
       if (availability.disponible === false) {
         throw new Error(
           availability.message ||
-            "El horario seleccionado no está disponible."
+          "El horario seleccionado no está disponible."
         )
       }
 
@@ -441,6 +454,7 @@ export function CreateAppointmentPage() {
         calculations={calculations}
         endTime={endTime}
         agenda={agenda}
+        dailyAgenda={dailyAgenda}
         errors={errors}
         loadingEmployees={loadingEmployees}
         loadingAgenda={loadingAgenda}

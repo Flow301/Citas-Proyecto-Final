@@ -126,3 +126,14 @@ export async function updateAppointment(
     body: JSON.stringify(appointmentData),
   })
 }
+
+export async function getDailyAppointmentAgenda(date) {
+  return apiRequest(
+    `/citas/agenda-diaria?fecha=${encodeURIComponent(
+      date
+    )}`,
+    {
+      method: "GET",
+    }
+  )
+}

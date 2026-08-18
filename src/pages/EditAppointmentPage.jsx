@@ -25,6 +25,7 @@ import {
   getClients,
   getEmployeeAppointments,
   updateAppointment,
+  getDailyAppointmentAgenda,
 } from "@/services/appointmentService"
 
 const initialFormData = {
@@ -110,6 +111,7 @@ export function EditAppointmentPage() {
   const [additionalServices, setAdditionalServices] =
     useState([])
   const [agenda, setAgenda] = useState(null)
+  const [dailyAgenda, setDailyAgenda] = useState(null)
   const [errors, setErrors] = useState({})
   const [loading, setLoading] = useState(true)
   const [loadingEmployees, setLoadingEmployees] =
@@ -239,25 +241,31 @@ export function EditAppointmentPage() {
 
   useEffect(() => {
     if (!formData.empleadoId || !formData.fecha) {
-      return undefined
-    }
-
+  return undefined
+}
     let isActive = true
 
-    getAppointmentEmployeeAgenda(
-      formData.empleadoId,
-      formData.fecha
-    )
-      .then((response) => {
+    Promise.all([
+      getAppointmentEmployeeAgenda(
+        formData.empleadoId,
+        formData.fecha
+      ),
+      getDailyAppointmentAgenda(formData.fecha),
+    ])
+      .then(([employeeAgendaResponse, dailyAgendaResponse]) => {
         if (isActive) {
-          setAgenda(response.data)
+          setAgenda(employeeAgendaResponse.data)
+          setDailyAgenda(dailyAgendaResponse.data)
         }
       })
       .catch((requestError) => {
         if (isActive) {
+          setAgenda(null)
+          setDailyAgenda(null)
+
           setErrors((currentErrors) => ({
             ...currentErrors,
-            disponibilidad: requestError.message,
+            agenda: requestError.message,
           }))
         }
       })
@@ -492,6 +500,8 @@ export function EditAppointmentPage() {
         calculations={calculations}
         endTime={endTime}
         agenda={agenda}
+        dailyAgenda={dailyAgenda}
+        appointmentId={id}
         errors={errors}
         loadingEmployees={loadingEmployees}
         loadingAgenda={loadingAgenda}

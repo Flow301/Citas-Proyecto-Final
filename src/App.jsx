@@ -26,6 +26,7 @@ import { AppointmentsPage } from "@/pages/AppointmentsPage"
 import { AppointmentDetailPage } from "@/pages/AppointmentDetailPage"
 import { CreateAppointmentPage } from "@/pages/CreateAppointmentPage"
 import { EditAppointmentPage } from "@/pages/EditAppointmentPage"
+import { DailyAgendaPage } from "@/pages/DailyAgendaPage"
 
 function App() {
   return (
@@ -202,6 +203,15 @@ function App() {
           path="/citas/:id"
           element={<AppointmentDetailPage />}
         />
+
+        <Route
+  path="/agenda-diaria"
+  element={
+    <RoleRoute allowedRoles={["Administrador"]}>
+      <DailyAgendaPage />
+    </RoleRoute>
+  }
+/>
 
 
 

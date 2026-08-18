@@ -18,6 +18,10 @@ const navigationItems = [
     path: "/servicios",
   },
   {
+  label: "Horarios",
+  path: "/horarios",
+},
+  {
     label: "Adicionales",
     path: "/servicios-adicionales",
   },
@@ -26,17 +30,51 @@ const navigationItems = [
     path: "/empleados",
     roles: ["Administrador", "Empleado"],
   },
+  {
+  label: "Restricciones",
+  path: "/restricciones",
+  roles: ["Administrador", "Empleado"],
+},
+{
+  label: "Citas",
+  path: "/citas",
+  roles: ["Administrador"],
+},
+{
+  label: "Citas asignadas",
+  path: "/citas",
+  roles: ["Empleado"],
+},
+{
+  label: "Mis citas",
+  path: "/citas",
+  roles: ["Cliente"],
+},
 ]
 
 export function MainLayout() {
   const navigate = useNavigate()
   const { user, logout } = useAuth()
 
-  const visibleNavigationItems = navigationItems.filter(
-  (item) =>
-    !item.roles ||
-    item.roles.includes(user.rol?.nombre)
-)
+ const navigationWithEmployeeAgenda = [
+  ...navigationItems,
+  ...(user.rol?.nombre === "Empleado" && user.empleado?.id
+    ? [
+        {
+          label: "Mi agenda",
+          path: `/empleados/${user.empleado.id}/agenda`,
+          roles: ["Empleado"],
+        },
+      ]
+    : []),
+]
+
+const visibleNavigationItems =
+  navigationWithEmployeeAgenda.filter(
+    (item) =>
+      !item.roles ||
+      item.roles.includes(user.rol?.nombre)
+  )
 
   const fullName = [user.nombre, user.primerApellido]
     .filter(Boolean)

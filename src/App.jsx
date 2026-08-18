@@ -18,6 +18,14 @@ import { EmployeesPage } from "@/pages/EmployeesPage"
 import { EmployeeDetailPage } from "@/pages/EmployeeDetailPage"
 import { CreateEmployeePage } from "@/pages/CreateEmployeePage"
 import { EditEmployeePage } from "@/pages/EditEmployeePage"
+import { EmployeeAgendaPage } from "@/pages/EmployeeAgendaPage"
+import { RestrictionsPage } from "@/pages/RestrictionsPage"
+import { RestrictionDetailPage } from "@/pages/RestrictionDetailPage"
+import { SchedulesPage } from "@/pages/SchedulesPage"
+import { AppointmentsPage } from "@/pages/AppointmentsPage"
+import { AppointmentDetailPage } from "@/pages/AppointmentDetailPage"
+import { CreateAppointmentPage } from "@/pages/CreateAppointmentPage"
+import { EditAppointmentPage } from "@/pages/EditAppointmentPage"
 
 function App() {
   return (
@@ -123,6 +131,76 @@ function App() {
               <EmployeeDetailPage />
             </RoleRoute>
           }
+        />
+
+        <Route
+          path="/empleados/:id/agenda"
+          element={
+            <RoleRoute
+              allowedRoles={["Administrador", "Empleado"]}
+            >
+              <EmployeeAgendaPage />
+            </RoleRoute>
+          }
+        />
+
+        <Route
+          path="/restricciones"
+          element={
+            <RoleRoute
+              allowedRoles={["Administrador", "Empleado"]}
+            >
+              <RestrictionsPage />
+            </RoleRoute>
+          }
+        />
+
+        <Route
+          path="/restricciones/:id"
+          element={
+            <RoleRoute
+              allowedRoles={["Administrador", "Empleado"]}
+            >
+              <RestrictionDetailPage />
+            </RoleRoute>
+          }
+        />
+
+        <Route
+          path="/horarios"
+          element={<SchedulesPage />}
+        />
+
+        <Route
+          path="/citas"
+          element={<AppointmentsPage />}
+        />
+
+        <Route
+          path="/citas/nueva"
+          element={
+            <RoleRoute
+              allowedRoles={["Administrador", "Empleado"]}
+            >
+              <CreateAppointmentPage />
+            </RoleRoute>
+          }
+        />
+
+        <Route
+          path="/citas/:id/editar"
+          element={
+            <RoleRoute
+              allowedRoles={["Administrador", "Empleado"]}
+            >
+              <EditAppointmentPage />
+            </RoleRoute>
+          }
+        />
+
+        <Route
+          path="/citas/:id"
+          element={<AppointmentDetailPage />}
         />
 
 

@@ -204,6 +204,17 @@ export function EmployeeDetailPage() {
 
         {isAdministrator && (
           <div className="flex flex-wrap gap-3">
+
+            <Button
+              nativeButton={false}
+              variant="outline"
+              render={
+                <Link to={`/empleados/${employee.id}/agenda`} />
+              }
+            >
+              Ver agenda
+            </Button>
+
             <Button
               nativeButton={false}
               variant="outline"

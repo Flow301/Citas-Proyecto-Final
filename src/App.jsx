@@ -102,6 +102,16 @@ const RestrictionsPage = lazyNamed(
   "RestrictionsPage"
 )
 
+const CreateRestrictionPage = lazyNamed(
+  () => import("@/pages/CreateRestrictionPage"),
+  "CreateRestrictionPage"
+)
+
+const EditRestrictionPage = lazyNamed(
+  () => import("@/pages/EditRestrictionPage"),
+  "EditRestrictionPage"
+)
+
 const RestrictionDetailPage = lazyNamed(
   () => import("@/pages/RestrictionDetailPage"),
   "RestrictionDetailPage"
@@ -270,6 +280,24 @@ function App() {
                 allowedRoles={["Administrador", "Empleado"]}
               >
                 <RestrictionsPage />
+              </RoleRoute>
+            }
+          />
+
+          <Route
+            path="/restricciones/nueva"
+            element={
+              <RoleRoute allowedRoles={["Administrador"]}>
+                <CreateRestrictionPage />
+              </RoleRoute>
+            }
+          />
+
+          <Route
+            path="/restricciones/:id/editar"
+            element={
+              <RoleRoute allowedRoles={["Administrador"]}>
+                <EditRestrictionPage />
               </RoleRoute>
             }
           />

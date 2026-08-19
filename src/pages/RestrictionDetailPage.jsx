@@ -8,11 +8,24 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
+  changeRestrictionStatus,
   getRestrictionById,
   getRestrictionTypes,
 } from "@/services/restrictionService"
+import { useAuth } from "@/context/auth-context"
 
 function formatDate(dateValue) {
   if (!dateValue) {
@@ -70,11 +83,17 @@ function getSchedule(restriction) {
 
 export function RestrictionDetailPage() {
   const { id } = useParams()
+  const { user } = useAuth()
+  const isAdministrator =
+    user.rol?.nombre === "Administrador"
   const [restriction, setRestriction] = useState(null)
   const [restrictionType, setRestrictionType] =
     useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
+  const [changingStatus, setChangingStatus] =
+    useState(false)
+  const [statusError, setStatusError] = useState("")
 
   useEffect(() => {
     let isActive = true
@@ -116,6 +135,29 @@ export function RestrictionDetailPage() {
       isActive = false
     }
   }, [id])
+
+    async function handleStatusChange() {
+    const newStatus = !restriction.activo
+
+    setChangingStatus(true)
+    setStatusError("")
+
+    try {
+      await changeRestrictionStatus(
+        restriction.id,
+        newStatus
+      )
+
+      setRestriction((currentRestriction) => ({
+        ...currentRestriction,
+        activo: newStatus,
+      }))
+    } catch (requestError) {
+      setStatusError(requestError.message)
+    } finally {
+      setChangingStatus(false)
+    }
+  }
 
   if (loading) {
     return (
@@ -160,14 +202,90 @@ export function RestrictionDetailPage() {
 
   return (
     <div className="space-y-6">
-      <Button
-        nativeButton={false}
-        variant="outline"
-        render={<Link to="/restricciones" />}
-      >
-        Volver a restricciones
-      </Button>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+        <Button
+          nativeButton={false}
+          variant="outline"
+          render={<Link to="/restricciones" />}
+        >
+          Volver a restricciones
+        </Button>
 
+                {isAdministrator && (
+          <Button
+            nativeButton={false}
+            variant="outline"
+            render={
+              <Link
+                to={`/restricciones/${restriction.id}/editar`}
+              />
+            }
+          >
+            Editar restricción
+          </Button>
+        )}
+        
+        {isAdministrator && (
+          <AlertDialog>
+            <AlertDialogTrigger
+              render={
+                <Button
+                  type="button"
+                  variant={
+                    restriction.activo
+                      ? "destructive"
+                      : "default"
+                  }
+                  disabled={changingStatus}
+                />
+              }
+            >
+              {changingStatus
+                ? "Actualizando..."
+                : restriction.activo
+                  ? "Desactivar restricción"
+                  : "Activar restricción"}
+            </AlertDialogTrigger>
+
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>
+                  {restriction.activo
+                    ? "¿Desactivar esta restricción?"
+                    : "¿Activar esta restricción?"}
+                </AlertDialogTitle>
+
+                <AlertDialogDescription>
+                  {restriction.activo
+                    ? "La restricción dejará de bloquear la disponibilidad."
+                    : "La restricción volverá a bloquear la disponibilidad correspondiente."}
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+
+              <AlertDialogFooter>
+                <AlertDialogCancel
+                  disabled={changingStatus}
+                >
+                  Cancelar
+                </AlertDialogCancel>
+
+                <AlertDialogAction
+                  onClick={handleStatusChange}
+                  disabled={changingStatus}
+                >
+                  Confirmar
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        )}
+      </div>
+
+      {statusError && (
+        <p role="alert" className="text-sm text-destructive">
+          {statusError}
+        </p>
+      )}
       <Card className="mx-auto max-w-3xl">
         <CardHeader>
           <div className="flex flex-wrap items-start justify-between gap-4">

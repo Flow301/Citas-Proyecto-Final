@@ -20,3 +20,38 @@ export async function getRestrictionTypes() {
     method: "GET",
   })
 }
+
+export async function createRestriction(restrictionData) {
+  return apiRequest("/restricciones-horario", {
+    method: "POST",
+    body: JSON.stringify(restrictionData),
+  })
+}
+
+export async function updateRestriction(
+  restrictionId,
+  restrictionData
+) {
+  return apiRequest(
+    `/restricciones-horario/${restrictionId}`,
+    {
+      method: "PUT",
+      body: JSON.stringify(restrictionData),
+    }
+  )
+}
+
+export async function changeRestrictionStatus(
+  restrictionId,
+  active
+) {
+  return apiRequest(
+    `/restricciones-horario/${restrictionId}/estado`,
+    {
+      method: "PATCH",
+      body: JSON.stringify({
+        activo: active,
+      }),
+    }
+  )
+}

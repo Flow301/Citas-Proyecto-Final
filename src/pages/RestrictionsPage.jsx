@@ -9,6 +9,7 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { getRestrictions } from "@/services/restrictionService"
+import { useAuth } from "@/context/auth-context"
 
 function formatDate(dateValue) {
   if (!dateValue) {
@@ -65,6 +66,9 @@ function getRestrictionSchedule(restriction) {
 }
 
 export function RestrictionsPage() {
+  const { user } = useAuth()
+  const isAdministrator =
+    user.rol?.nombre === "Administrador"
   const [restrictions, setRestrictions] = useState([])
   const [sorting, setSorting] = useState("fecha-asc")
   const [loading, setLoading] = useState(true)
@@ -125,6 +129,15 @@ export function RestrictionsPage() {
             establecimiento y de sus empleados.
           </p>
         </div>
+
+        {isAdministrator && (
+          <Button
+            nativeButton={false}
+            render={<Link to="/restricciones/nueva" />}
+          >
+            Nueva restricción
+          </Button>
+        )}
 
         <div className="space-y-2">
           <label

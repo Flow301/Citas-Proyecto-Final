@@ -191,6 +191,7 @@ export function LoginPage() {
               <Button
                 variant="link"
                 render={<Link to="/registro" />}
+                nativeButton={false}
               >
                 Crear una cuenta
               </Button>

@@ -75,6 +75,7 @@ export function ServiceCard({ service, specialtyName }) {
           className="w-full"
           variant="outline"
           render={<Link to={`/servicios/${service.id}`} />}
+          nativeButton={false}
         >
           Ver detalle
         </Button>

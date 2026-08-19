@@ -7,6 +7,12 @@ loadSeedEnvironment()
 const API_URL =
   process.env.SEED_API_URL || "http://localhost:3000"
 
+const SEED_IMAGES_DIRECTORY = path.resolve(
+  process.cwd(),
+  "scripts",
+  "seed-images"
+)
+
 const ADMIN_EMAIL = process.env.SEED_ADMIN_EMAIL
 const ADMIN_PASSWORD = process.env.SEED_ADMIN_PASSWORD
 const USER_PASSWORD = process.env.SEED_USER_PASSWORD
@@ -344,6 +350,7 @@ const services = [
       "Tutoría personalizada de matemática general para estudiantes.",
     precioBase: 10000,
     duracionMinutos: 60,
+    imagenArchivo: "matematica.jpg",
   },
   {
     nombre: "Tutoría de Cálculo",
@@ -351,6 +358,7 @@ const services = [
       "Apoyo académico en límites, derivadas, integrales y aplicaciones.",
     precioBase: 12000,
     duracionMinutos: 90,
+    imagenArchivo: "calculo.jpg",
   },
   {
     nombre: "Tutoría de Programación",
@@ -358,6 +366,7 @@ const services = [
       "Tutoría práctica de lógica, algoritmos y programación básica.",
     precioBase: 15000,
     duracionMinutos: 90,
+    imagenArchivo: "programacion.jpg",
   },
   {
     nombre: "Tutoría de Física",
@@ -365,6 +374,7 @@ const services = [
       "Apoyo en mecánica, movimiento, fuerzas, energía y resolución de problemas.",
     precioBase: 12000,
     duracionMinutos: 60,
+    imagenArchivo: "fisica.jpg",
   },
   {
     nombre: "Tutoría de Inglés",
@@ -372,6 +382,7 @@ const services = [
       "Práctica guiada de gramática, vocabulario y conversación en inglés.",
     precioBase: 10000,
     duracionMinutos: 60,
+    imagenArchivo: "ingles.jpg",
   },
 ]
 
@@ -527,6 +538,88 @@ async function apiRequest(endpoint, options = {}) {
   return result
 }
 
+async function uploadSeedImage(fileName) {
+  const imagePath = path.join(
+    SEED_IMAGES_DIRECTORY,
+    fileName
+  )
+
+  if (!fs.existsSync(imagePath)) {
+    throw new Error(
+      `No se encontró la imagen del seed: ${imagePath}`
+    )
+  }
+
+  const extension = path
+    .extname(fileName)
+    .toLowerCase()
+
+  const mimeTypes = {
+    ".jpg": "image/jpeg",
+    ".jpeg": "image/jpeg",
+    ".png": "image/png",
+    ".webp": "image/webp",
+  }
+
+  const mimeType = mimeTypes[extension]
+
+  if (!mimeType) {
+    throw new Error(
+      `Formato de imagen no permitido: ${fileName}`
+    )
+  }
+
+  const imageBuffer = fs.readFileSync(imagePath)
+  const imageBlob = new Blob(
+    [imageBuffer],
+    {
+      type: mimeType,
+    }
+  )
+
+  const formData = new FormData()
+
+  formData.append(
+    "image",
+    imageBlob,
+    fileName
+  )
+
+  const response = await fetch(
+    `${API_URL}/images/upload`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${authToken}`,
+      },
+      body: formData,
+    }
+  )
+
+  let result
+
+  try {
+    result = await response.json()
+  } catch {
+    result = null
+  }
+
+  if (!response.ok) {
+    throw new Error(
+      result?.message ||
+        `No se pudo subir la imagen ${fileName}`
+    )
+  }
+
+  if (!result?.fileName) {
+    throw new Error(
+      `La API no devolvió el nombre de ${fileName}`
+    )
+  }
+
+  return result.fileName
+}
+
 async function login() {
   const response = await apiRequest("/usuarios/login", {
     method: "POST",
@@ -668,25 +761,64 @@ async function seedServices() {
   }
 
   for (const service of services) {
-    const alreadyExists = existingServices.some(
+    const {
+      imagenArchivo,
+      ...serviceData
+    } = service
+
+    const existingService = existingServices.find(
       (item) => item.nombre === service.nombre
     )
 
-    if (alreadyExists) {
-      console.log(`- Servicio existente: ${service.nombre}`)
+    if (
+      existingService &&
+      existingService.imagen
+    ) {
+      console.log(
+        `- Servicio con imagen existente: ${service.nombre}`
+      )
+      continue
+    }
+
+    console.log(
+      `Subiendo imagen: ${imagenArchivo}`
+    )
+
+    const uploadedFileName =
+      await uploadSeedImage(imagenArchivo)
+
+    const requestData = {
+      ...serviceData,
+      especialidadId:
+        existingService?.especialidadId ??
+        generalSpecialty.id,
+      imagen: uploadedFileName,
+    }
+
+    if (existingService) {
+      await apiRequest(
+        `/servicios/${existingService.id}`,
+        {
+          method: "PUT",
+          body: JSON.stringify(requestData),
+        }
+      )
+
+      console.log(
+        `✓ Imagen agregada al servicio: ${service.nombre}`
+      )
+
       continue
     }
 
     await apiRequest("/servicios", {
       method: "POST",
-      body: JSON.stringify({
-        ...service,
-        especialidadId: generalSpecialty.id,
-        imagen: null,
-      }),
+      body: JSON.stringify(requestData),
     })
 
-    console.log(`✓ Servicio creado: ${service.nombre}`)
+    console.log(
+      `✓ Servicio creado con imagen: ${service.nombre}`
+    )
   }
 }
 

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react"
 import { AdditionalServiceCard } from "@/components/additionals/AdditionalServiceCard"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
 import {
   Select,
@@ -19,11 +20,23 @@ async function requestAdditionalServices() {
   return response.data || []
 }
 
+function normalizeText(value) {
+  return String(value ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim()
+}
+
 export function AdditionalServicesPage() {
   const { user } = useAuth()
   const isAdministrator = user?.rol?.nombre === "Administrador"
   const [additionals, setAdditionals] = useState([])
   const [sortOrder, setSortOrder] = useState("nombre-asc")
+  const [searchTerm, setSearchTerm] = useState("")
+  const [minimumPrice, setMinimumPrice] = useState("")
+  const [maximumPrice, setMaximumPrice] = useState("")
+  const [filtersOpen, setFiltersOpen] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
 
@@ -69,38 +82,93 @@ export function AdditionalServicesPage() {
   }, [])
 
   const sortedAdditionals = useMemo(() => {
-  const visibleAdditionals = isAdministrator
-    ? additionals
-    : additionals.filter((additional) => additional.activo)
+    const normalizedSearch = normalizeText(searchTerm)
 
-  return [...visibleAdditionals].sort(
-    (firstAdditional, secondAdditional) => {
-      if (sortOrder === "nombre-desc") {
-        return secondAdditional.nombre.localeCompare(
-          firstAdditional.nombre
+    const visibleAdditionals = additionals.filter(
+      (additional) => {
+        if (!isAdministrator && !additional.activo) {
+          return false
+        }
+
+        const searchableText = normalizeText(
+          `${additional.nombre} ${additional.descripcion}`
+        )
+
+        if (
+          normalizedSearch &&
+          !searchableText.includes(normalizedSearch)
+        ) {
+          return false
+        }
+
+        const price = Number(additional.precio)
+
+        if (
+          minimumPrice !== "" &&
+          price < Number(minimumPrice)
+        ) {
+          return false
+        }
+
+        if (
+          maximumPrice !== "" &&
+          price > Number(maximumPrice)
+        ) {
+          return false
+        }
+
+        return true
+      }
+    )
+
+    return [...visibleAdditionals].sort(
+      (firstAdditional, secondAdditional) => {
+        if (sortOrder === "nombre-desc") {
+          return secondAdditional.nombre.localeCompare(
+            firstAdditional.nombre
+          )
+        }
+
+        if (sortOrder === "precio-asc") {
+          return (
+            Number(firstAdditional.precio) -
+            Number(secondAdditional.precio)
+          )
+        }
+
+        if (sortOrder === "precio-desc") {
+          return (
+            Number(secondAdditional.precio) -
+            Number(firstAdditional.precio)
+          )
+        }
+
+        return firstAdditional.nombre.localeCompare(
+          secondAdditional.nombre
         )
       }
+    )
+  }, [
+    additionals,
+    sortOrder,
+    isAdministrator,
+    searchTerm,
+    minimumPrice,
+    maximumPrice,
+  ])
 
-      if (sortOrder === "precio-asc") {
-        return (
-          Number(firstAdditional.precio) -
-          Number(secondAdditional.precio)
-        )
-      }
+  const hasActiveFilters =
+    searchTerm !== "" ||
+    minimumPrice !== "" ||
+    maximumPrice !== "" ||
+    sortOrder !== "nombre-asc"
 
-      if (sortOrder === "precio-desc") {
-        return (
-          Number(secondAdditional.precio) -
-          Number(firstAdditional.precio)
-        )
-      }
-
-      return firstAdditional.nombre.localeCompare(
-        secondAdditional.nombre
-      )
-    }
-  )
-}, [additionals, sortOrder, isAdministrator])
+  function clearFilters() {
+    setSearchTerm("")
+    setMinimumPrice("")
+    setMaximumPrice("")
+    setSortOrder("nombre-asc")
+  }
 
   return (
     <div className="space-y-6">
@@ -126,33 +194,144 @@ export function AdditionalServicesPage() {
               Crear adicional
             </Button>
           )}
-
-          <div className="w-full sm:w-56">
-            <Select value={sortOrder} onValueChange={setSortOrder}>
-              <SelectTrigger aria-label="Ordenar servicios adicionales">
-                <SelectValue placeholder="Ordenar por" />
-              </SelectTrigger>
-
-              <SelectContent>
-                <SelectItem value="nombre-asc">
-                  Nombre: A-Z
-                </SelectItem>
-
-                <SelectItem value="nombre-desc">
-                  Nombre: Z-A
-                </SelectItem>
-
-                <SelectItem value="precio-asc">
-                  Menor precio
-                </SelectItem>
-
-                <SelectItem value="precio-desc">
-                  Mayor precio
-                </SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
         </div>
+      </div>
+
+      <div className="space-y-3">
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <Input
+            id="additional-search"
+            type="search"
+            value={searchTerm}
+            onChange={(event) =>
+              setSearchTerm(event.target.value)
+            }
+            placeholder="Buscar por nombre o descripción..."
+            aria-label="Buscar servicios adicionales"
+            className="flex-1"
+          />
+
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() =>
+              setFiltersOpen((currentValue) => !currentValue)
+            }
+          >
+            {filtersOpen ? "Ocultar filtros" : "Mostrar filtros"}
+          </Button>
+        </div>
+
+        {filtersOpen && (
+          <Card>
+            <CardContent className="space-y-5 p-5">
+              <div className="grid gap-4 sm:grid-cols-3">
+                <div className="space-y-2">
+                  <label
+                    htmlFor="additional-sorting"
+                    className="text-sm font-medium"
+                  >
+                    Ordenar por
+                  </label>
+
+                  <Select
+                    value={sortOrder}
+                    onValueChange={setSortOrder}
+                  >
+                    <SelectTrigger id="additional-sorting">
+                      <SelectValue>
+                        {{
+                          "nombre-asc": "Nombre: A-Z",
+                          "nombre-desc": "Nombre: Z-A",
+                          "precio-asc": "Menor precio",
+                          "precio-desc": "Mayor precio",
+                        }[sortOrder]}
+                      </SelectValue>
+                    </SelectTrigger>
+
+                    <SelectContent>
+                      <SelectItem value="nombre-asc">
+                        Nombre: A-Z
+                      </SelectItem>
+
+                      <SelectItem value="nombre-desc">
+                        Nombre: Z-A
+                      </SelectItem>
+
+                      <SelectItem value="precio-asc">
+                        Menor precio
+                      </SelectItem>
+
+                      <SelectItem value="precio-desc">
+                        Mayor precio
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <label
+                    htmlFor="additional-minimum-price"
+                    className="text-sm font-medium"
+                  >
+                    Precio mínimo
+                  </label>
+
+                  <Input
+                    id="additional-minimum-price"
+                    type="number"
+                    min="0"
+                    value={minimumPrice}
+                    onChange={(event) =>
+                      setMinimumPrice(event.target.value)
+                    }
+                    placeholder="₡0"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label
+                    htmlFor="additional-maximum-price"
+                    className="text-sm font-medium"
+                  >
+                    Precio máximo
+                  </label>
+
+                  <Input
+                    id="additional-maximum-price"
+                    type="number"
+                    min="0"
+                    value={maximumPrice}
+                    onChange={(event) =>
+                      setMaximumPrice(event.target.value)
+                    }
+                    placeholder="Sin límite"
+                  />
+                </div>
+              </div>
+
+              <div className="flex flex-wrap items-center justify-between gap-3 border-t pt-4">
+                <p
+                  className="text-sm text-muted-foreground"
+                  aria-live="polite"
+                >
+                  {`${sortedAdditionals.length} adicional${sortedAdditionals.length === 1 ? "" : "es"
+                    } encontrado${sortedAdditionals.length === 1 ? "" : "s"
+                    }`}
+                </p>
+
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={clearFilters}
+                  disabled={!hasActiveFilters}
+                >
+                  Limpiar filtros
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
 
       {loading && (

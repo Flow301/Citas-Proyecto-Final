@@ -2,6 +2,7 @@ import { useState } from "react"
 import { Link } from "react-router"
 import { registerClient } from "@/services/authService"
 import { Button } from "@/components/ui/button"
+import { ThemeToggle } from "@/components/common/ThemeToggle"
 import {
   Card,
   CardContent,
@@ -187,7 +188,10 @@ export function RegisterPage() {
   }
 
   return (
-    <main className="min-h-screen bg-muted px-4 py-8">
+    <main className="relative flex min-h-screen items-center justify-center bg-muted px-4 py-8">
+      <div className="absolute right-4 top-4">
+        <ThemeToggle />
+      </div>
       <Card className="mx-auto w-full max-w-2xl">
         <CardHeader>
           <CardTitle>Crear cuenta de estudiante</CardTitle>
@@ -310,6 +314,7 @@ export function RegisterPage() {
 
             <div className="text-center">
               <Button
+                nativeButton={false}
                 variant="link"
                 render={<Link to="/login" />}
               >
@@ -317,6 +322,17 @@ export function RegisterPage() {
               </Button>
             </div>
           </form>
+
+          <div className="mt-5 border-t pt-5">
+            <Button
+              nativeButton={false}
+              variant="outline"
+              className="w-full"
+              render={<Link to="/" />}
+            >
+              Volver al inicio
+            </Button>
+          </div>
         </CardContent>
       </Card>
     </main>

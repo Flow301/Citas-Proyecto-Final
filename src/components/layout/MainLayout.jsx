@@ -6,6 +6,7 @@ import {
 import { GraduationCap } from "lucide-react"
 import { useAuth } from "@/context/auth-context"
 import { Button } from "@/components/ui/button"
+import { ThemeToggle } from "@/components/common/ThemeToggle"
 import { cn } from "@/lib/utils"
 
 const authenticatedRoles = [
@@ -77,12 +78,12 @@ export function MainLayout() {
     ...navigationItems,
     ...(roleName === "Empleado" && user?.empleado?.id
       ? [
-          {
-            label: "Mi agenda",
-            path: `/empleados/${user.empleado.id}/agenda`,
-            roles: ["Empleado"],
-          },
-        ]
+        {
+          label: "Mi agenda",
+          path: `/empleados/${user.empleado.id}/agenda`,
+          roles: ["Empleado"],
+        },
+      ]
       : []),
   ]
 
@@ -95,8 +96,8 @@ export function MainLayout() {
 
   const fullName = user
     ? [user.nombre, user.primerApellido]
-        .filter(Boolean)
-        .join(" ")
+      .filter(Boolean)
+      .join(" ")
     : ""
 
   function handleLogout() {
@@ -105,7 +106,7 @@ export function MainLayout() {
   }
 
   return (
-    <div className="min-h-screen bg-muted/40">
+    <div className="flex min-h-screen flex-col bg-muted/40">
       <header className="border-b bg-background">
         <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-4 sm:px-6 lg:px-8">
           <div className="flex flex-wrap items-center justify-between gap-4">
@@ -134,6 +135,7 @@ export function MainLayout() {
 
             {user ? (
               <div className="flex items-center gap-3">
+                <ThemeToggle />
                 <div className="hidden text-right sm:block">
                   <p className="text-sm font-medium">
                     {fullName}
@@ -154,6 +156,8 @@ export function MainLayout() {
               </div>
             ) : (
               <div className="flex flex-wrap items-center gap-2">
+                <ThemeToggle />
+
                 <Button
                   nativeButton={false}
                   variant="outline"
@@ -197,9 +201,138 @@ export function MainLayout() {
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+      <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
         <Outlet />
       </main>
+
+      <footer className="border-t bg-background">
+        <div className="mx-auto grid w-full max-w-7xl gap-8 px-4 py-10 sm:px-6 md:grid-cols-3 lg:px-8">
+          <div>
+            <NavLink
+              to="/"
+              className="inline-flex items-center gap-3"
+              aria-label="Ir al inicio"
+            >
+              <div className="rounded-md bg-primary p-2 text-primary-foreground">
+                <GraduationCap
+                  className="size-5"
+                  aria-hidden="true"
+                />
+              </div>
+
+              <div>
+                <p className="font-semibold">
+                  Centro de Tutorías
+                </p>
+
+                <p className="text-xs text-muted-foreground">
+                  Gestión académica
+                </p>
+              </div>
+            </NavLink>
+
+            <p className="mt-4 max-w-sm text-sm leading-6 text-muted-foreground">
+              Tutorías personalizadas para reforzar tus
+              conocimientos y ayudarte a alcanzar tus objetivos
+              académicos.
+            </p>
+          </div>
+
+          <div>
+            <h2 className="font-semibold">
+              Información
+            </h2>
+
+            <nav
+              aria-label="Enlaces informativos"
+              className="mt-4 flex flex-col items-start gap-3"
+            >
+              <NavLink
+                to="/servicios"
+                className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+              >
+                Servicios
+              </NavLink>
+
+              <NavLink
+                to="/horarios"
+                className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+              >
+                Horarios de atención
+              </NavLink>
+
+              <NavLink
+                to="/servicios-adicionales"
+                className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+              >
+                Servicios adicionales
+              </NavLink>
+            </nav>
+          </div>
+
+          <div>
+            <h2 className="font-semibold">
+              {user ? "Mi cuenta" : "Acceso"}
+            </h2>
+
+            <nav
+              aria-label="Enlaces de cuenta"
+              className="mt-4 flex flex-col items-start gap-3"
+            >
+              {user ? (
+                <>
+                  <NavLink
+                    to="/perfil"
+                    className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+                  >
+                    Mi perfil
+                  </NavLink>
+
+                  <NavLink
+                    to="/citas"
+                    className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+                  >
+                    {roleName === "Cliente"
+                      ? "Mis citas"
+                      : roleName === "Empleado"
+                        ? "Citas asignadas"
+                        : "Administrar citas"}
+                  </NavLink>
+                </>
+              ) : (
+                <>
+                  <NavLink
+                    to="/login"
+                    className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+                  >
+                    Iniciar sesión
+                  </NavLink>
+
+                  <NavLink
+                    to="/registro"
+                    className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+                  >
+                    Crear una cuenta
+                  </NavLink>
+                </>
+              )}
+            </nav>
+          </div>
+        </div>
+
+        <div className="border-t">
+          <div className="mx-auto flex w-full max-w-7xl flex-col gap-2 px-4 py-4 text-center text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:text-left lg:px-8">
+            <p>
+              © {new Date().getFullYear()} Centro de Tutorías
+              Académicas.
+            </p>
+
+            <p>
+              Proyecto académico desarrollado con React.
+            </p>
+          </div>
+        </div>
+      </footer>
     </div>
   )
 }

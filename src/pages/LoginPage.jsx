@@ -2,6 +2,7 @@ import { useState } from "react"
 import { Link, Navigate, useNavigate } from "react-router"
 import { useAuth } from "@/context/auth-context"
 import { Button } from "@/components/ui/button"
+import { ThemeToggle } from "@/components/common/ThemeToggle"
 import {
   Card,
   CardContent,
@@ -100,7 +101,10 @@ export function LoginPage() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-muted p-4">
+    <main className="relative flex min-h-screen items-center justify-center bg-muted p-4">
+      <div className="absolute right-4 top-4">
+        <ThemeToggle />
+      </div>
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle>Centro de Tutorías Académicas</CardTitle>
@@ -197,6 +201,17 @@ export function LoginPage() {
               </Button>
             </div>
           </form>
+
+          <div className="mt-5 border-t pt-5">
+            <Button
+              nativeButton={false}
+              variant="outline"
+              className="w-full"
+              render={<Link to="/" />}
+            >
+              Volver al inicio
+            </Button>
+          </div>
         </CardContent>
       </Card>
     </main>

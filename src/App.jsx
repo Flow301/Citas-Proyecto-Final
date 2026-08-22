@@ -128,16 +128,6 @@ const SchedulesPage = lazyNamed(
   "SchedulesPage"
 )
 
-const CreateSchedulePage = lazyNamed(
-  () => import("@/pages/CreateSchedulePage"),
-  "CreateSchedulePage"
-)
-
-const EditSchedulePage = lazyNamed(
-  () => import("@/pages/EditSchedulePage"),
-  "EditSchedulePage"
-)
-
 const AppointmentsPage = lazyNamed(
   () => import("@/pages/AppointmentsPage"),
   "AppointmentsPage"
@@ -350,24 +340,6 @@ function App() {
           <Route
             path="/horarios"
             element={<SchedulesPage />}
-          />
-
-          <Route
-            path="/horarios/nuevo"
-            element={
-              <RoleRoute allowedRoles={["Administrador"]}>
-                <CreateSchedulePage />
-              </RoleRoute>
-            }
-          />
-
-          <Route
-            path="/horarios/:id/editar"
-            element={
-              <RoleRoute allowedRoles={["Administrador"]}>
-                <EditSchedulePage />
-              </RoleRoute>
-            }
           />
 
           <Route

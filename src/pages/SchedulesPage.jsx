@@ -1,27 +1,13 @@
 import { useEffect, useMemo, useState } from "react"
-import { Link } from "react-router"
 import { ActiveStatusBadge } from "@/components/common/ActiveStatusBadge"
-import { Button } from "@/components/ui/button"
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
-import { useAuth } from "@/context/auth-context"
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
+import { useAuth } from "@/context/auth-context"
 import {
-  changeScheduleStatus,
   getSchedules,
   getWeekDays,
 } from "@/services/scheduleService"
@@ -39,16 +25,14 @@ function formatTime(timeValue) {
 }
 
 export function SchedulesPage() {
+  const { user } = useAuth()
+  const isAdministrator =
+    user?.rol?.nombre === "Administrador"
+
   const [weekDays, setWeekDays] = useState([])
   const [schedules, setSchedules] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
-  const [changingScheduleId, setChangingScheduleId] =
-    useState(null)
-  const [statusError, setStatusError] = useState("")
-  const { user } = useAuth()
-  const isAdministrator =
-    user?.rol?.nombre === "Administrador"
 
   useEffect(() => {
     let isActive = true
@@ -84,89 +68,36 @@ export function SchedulesPage() {
   }, [weekDays])
 
   function getDaySchedules(day) {
-  const schedulesFromList = schedules.filter(
-    (schedule) => schedule.diaSemanaId === day.id
-  )
+    const schedulesFromList = schedules.filter(
+      (schedule) => schedule.diaSemanaId === day.id
+    )
 
-  const daySchedules =
-    schedulesFromList.length > 0
-      ? schedulesFromList
-      : day.horarios ?? []
+    const daySchedules =
+      schedulesFromList.length > 0
+        ? schedulesFromList
+        : day.horarios ?? []
 
-  if (isAdministrator) {
-    return daySchedules
-  }
-
-  return daySchedules.filter(
-    (schedule) => schedule.activo
-  )
-}
-
-  async function handleStatusChange(schedule) {
-    const newStatus = !schedule.activo
-
-    setChangingScheduleId(schedule.id)
-    setStatusError("")
-
-    try {
-      await changeScheduleStatus(
-        schedule.id,
-        newStatus
-      )
-
-      setSchedules((currentSchedules) =>
-        currentSchedules.map((currentSchedule) =>
-          currentSchedule.id === schedule.id
-            ? {
-              ...currentSchedule,
-              activo: newStatus,
-            }
-            : currentSchedule
-        )
-      )
-    } catch (requestError) {
-      setStatusError(requestError.message)
-    } finally {
-      setChangingScheduleId(null)
+    if (isAdministrator) {
+      return daySchedules
     }
+
+    return daySchedules.filter(
+      (schedule) => schedule.activo
+    )
   }
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold">
-            Horarios de atención
-          </h1>
+      <div>
+        <h1 className="text-3xl font-bold">
+          Horarios de atención
+        </h1>
 
-          <p className="text-muted-foreground">
-            Consulta el horario general del establecimiento
-            para cada día de la semana.
-          </p>
-        </div>
-
-        {isAdministrator && (
-          <Button
-            nativeButton={false}
-            render={<Link to="/horarios/nuevo" />}
-          >
-            Nuevo horario
-          </Button>
-        )}
+        <p className="text-muted-foreground">
+          Consulta el horario general del establecimiento para
+          cada día de la semana.
+        </p>
       </div>
-
-      {statusError && (
-        <Card>
-          <CardContent className="p-4 text-center">
-            <p
-              role="alert"
-              className="text-sm text-destructive"
-            >
-              {statusError}
-            </p>
-          </CardContent>
-        </Card>
-      )}
 
       {loading && (
         <Card>
@@ -231,96 +162,9 @@ export function SchedulesPage() {
                             {formatTime(schedule.horaFin)}
                           </p>
 
-                          <div className="flex flex-wrap items-center gap-2">
-                            <ActiveStatusBadge
-                              active={schedule.activo}
-                            />
-
-                            {isAdministrator && (
-                              <>
-                                <Button
-                                  nativeButton={false}
-                                  size="sm"
-                                  variant="outline"
-                                  render={
-                                    <Link
-                                      to={`/horarios/${schedule.id}/editar`}
-                                    />
-                                  }
-                                >
-                                  Editar
-                                </Button>
-
-                                <AlertDialog>
-                                  <AlertDialogTrigger
-                                    render={
-                                      <Button
-                                        type="button"
-                                        size="sm"
-                                        variant={
-                                          schedule.activo
-                                            ? "destructive"
-                                            : "default"
-                                        }
-                                        disabled={
-                                          changingScheduleId ===
-                                          schedule.id
-                                        }
-                                      />
-                                    }
-                                  >
-                                    {changingScheduleId ===
-                                      schedule.id
-                                      ? "Actualizando..."
-                                      : schedule.activo
-                                        ? "Desactivar"
-                                        : "Activar"}
-                                  </AlertDialogTrigger>
-
-                                  <AlertDialogContent>
-                                    <AlertDialogHeader>
-                                      <AlertDialogTitle>
-                                        {schedule.activo
-                                          ? "¿Desactivar este horario?"
-                                          : "¿Activar este horario?"}
-                                      </AlertDialogTitle>
-
-                                      <AlertDialogDescription>
-                                        {schedule.activo
-                                          ? "El establecimiento dejará de atender durante este rango horario."
-                                          : "El establecimiento volverá a atender durante este rango horario."}
-                                      </AlertDialogDescription>
-                                    </AlertDialogHeader>
-
-                                    <AlertDialogFooter>
-                                      <AlertDialogCancel
-                                        disabled={
-                                          changingScheduleId ===
-                                          schedule.id
-                                        }
-                                      >
-                                        Cancelar
-                                      </AlertDialogCancel>
-
-                                      <AlertDialogAction
-                                        onClick={() =>
-                                          handleStatusChange(
-                                            schedule
-                                          )
-                                        }
-                                        disabled={
-                                          changingScheduleId ===
-                                          schedule.id
-                                        }
-                                      >
-                                        Confirmar
-                                      </AlertDialogAction>
-                                    </AlertDialogFooter>
-                                  </AlertDialogContent>
-                                </AlertDialog>
-                              </>
-                            )}
-                          </div>
+                          <ActiveStatusBadge
+                            active={schedule.activo}
+                          />
                         </div>
                       ))}
                     </div>

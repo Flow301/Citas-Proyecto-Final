@@ -136,7 +136,7 @@ export function RestrictionDetailPage() {
     }
   }, [id])
 
-    async function handleStatusChange() {
+  async function handleStatusChange() {
     const newStatus = !restriction.activo
 
     setChangingStatus(true)
@@ -196,28 +196,28 @@ export function RestrictionDetailPage() {
   }
 
   if (!restriction.activo && !isAdministrator) {
-  return (
-    <Card className="mx-auto max-w-3xl">
-      <CardContent className="space-y-4 p-8 text-center">
-        <p className="font-medium">
-          Esta restricción ya no está activa.
-        </p>
+    return (
+      <Card className="mx-auto max-w-3xl">
+        <CardContent className="space-y-4 p-8 text-center">
+          <p className="font-medium">
+            Esta restricción ya no está activa.
+          </p>
 
-        <p className="text-sm text-muted-foreground">
-          Consulta las restricciones activas registradas.
-        </p>
+          <p className="text-sm text-muted-foreground">
+            Consulta las restricciones activas registradas.
+          </p>
 
-        <Button
-          nativeButton={false}
-          variant="outline"
-          render={<Link to="/restricciones" />}
-        >
-          Volver a restricciones
-        </Button>
-      </CardContent>
-    </Card>
-  )
-}
+          <Button
+            nativeButton={false}
+            variant="outline"
+            render={<Link to="/restricciones" />}
+          >
+            Volver a restricciones
+          </Button>
+        </CardContent>
+      </Card>
+    )
+  }
 
   const typeName =
     restriction.tipoRestriccion?.nombre ??
@@ -226,7 +226,7 @@ export function RestrictionDetailPage() {
 
   return (
     <div className="space-y-6">
-            <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <Button
           nativeButton={false}
           variant="outline"
@@ -235,73 +235,73 @@ export function RestrictionDetailPage() {
           Volver a restricciones
         </Button>
 
-                {isAdministrator && (
-          <Button
-            nativeButton={false}
-            variant="outline"
-            render={
-              <Link
-                to={`/restricciones/${restriction.id}/editar`}
-              />
-            }
-          >
-            Editar restricción
-          </Button>
-        )}
-        
         {isAdministrator && (
-          <AlertDialog>
-            <AlertDialogTrigger
+          <div className="flex flex-wrap gap-3">
+            <Button
+              nativeButton={false}
+              variant="outline"
               render={
-                <Button
-                  type="button"
-                  variant={
-                    restriction.activo
-                      ? "destructive"
-                      : "default"
-                  }
-                  disabled={changingStatus}
+                <Link
+                  to={`/restricciones/${restriction.id}/editar`}
                 />
               }
             >
-              {changingStatus
-                ? "Actualizando..."
-                : restriction.activo
-                  ? "Desactivar restricción"
-                  : "Activar restricción"}
-            </AlertDialogTrigger>
+              Editar restricción
+            </Button>
 
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>
-                  {restriction.activo
-                    ? "¿Desactivar esta restricción?"
-                    : "¿Activar esta restricción?"}
-                </AlertDialogTitle>
+            <AlertDialog>
+              <AlertDialogTrigger
+                render={
+                  <Button
+                    type="button"
+                    variant={
+                      restriction.activo
+                        ? "destructive"
+                        : "default"
+                    }
+                    disabled={changingStatus}
+                  />
+                }
+              >
+                {changingStatus
+                  ? "Actualizando..."
+                  : restriction.activo
+                    ? "Desactivar restricción"
+                    : "Activar restricción"}
+              </AlertDialogTrigger>
 
-                <AlertDialogDescription>
-                  {restriction.activo
-                    ? "La restricción dejará de bloquear la disponibilidad."
-                    : "La restricción volverá a bloquear la disponibilidad correspondiente."}
-                </AlertDialogDescription>
-              </AlertDialogHeader>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>
+                    {restriction.activo
+                      ? "¿Desactivar esta restricción?"
+                      : "¿Activar esta restricción?"}
+                  </AlertDialogTitle>
 
-              <AlertDialogFooter>
-                <AlertDialogCancel
-                  disabled={changingStatus}
-                >
-                  Cancelar
-                </AlertDialogCancel>
+                  <AlertDialogDescription>
+                    {restriction.activo
+                      ? "La restricción dejará de bloquear la disponibilidad."
+                      : "La restricción volverá a bloquear la disponibilidad correspondiente."}
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
 
-                <AlertDialogAction
-                  onClick={handleStatusChange}
-                  disabled={changingStatus}
-                >
-                  Confirmar
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+                <AlertDialogFooter>
+                  <AlertDialogCancel
+                    disabled={changingStatus}
+                  >
+                    Cancelar
+                  </AlertDialogCancel>
+
+                  <AlertDialogAction
+                    onClick={handleStatusChange}
+                    disabled={changingStatus}
+                  >
+                    Confirmar
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
         )}
       </div>
 

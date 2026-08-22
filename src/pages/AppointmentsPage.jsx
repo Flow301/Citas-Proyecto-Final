@@ -198,43 +198,45 @@ export function AppointmentsPage() {
           </p>
         </div>
 
-        {canCreateAppointment && (
-          <Button
-            nativeButton={false}
-            render={<Link to="/citas/nueva" />}
-          >
-            Nueva cita
-          </Button>
-        )}
+        <div className="flex flex-wrap items-end gap-3">
+          {canCreateAppointment && (
+            <Button
+              nativeButton={false}
+              render={<Link to="/citas/nueva" />}
+            >
+              Nueva cita
+            </Button>
+          )}
 
-        <div className="space-y-2">
-          <label
-            htmlFor="appointment-sorting"
-            className="block text-sm font-medium"
-          >
-            Ordenar por
-          </label>
+          <div className="space-y-2">
+            <label
+              htmlFor="appointment-sorting"
+              className="block text-sm font-medium"
+            >
+              Ordenar por
+            </label>
 
-          <select
-            id="appointment-sorting"
-            value={sorting}
-            onChange={(event) =>
-              setSorting(event.target.value)
-            }
-            className="h-10 rounded-md border bg-background px-3 text-sm"
-          >
-            <option value="fecha-desc">
-              Fecha: más reciente
-            </option>
+            <select
+              id="appointment-sorting"
+              value={sorting}
+              onChange={(event) =>
+                setSorting(event.target.value)
+              }
+              className="h-10 rounded-md border bg-background px-3 text-sm"
+            >
+              <option value="fecha-desc">
+                Fecha: más reciente
+              </option>
 
-            <option value="fecha-asc">
-              Fecha: más próxima
-            </option>
+              <option value="fecha-asc">
+                Fecha: más próxima
+              </option>
 
-            <option value="estado-asc">
-              Estado: A-Z
-            </option>
-          </select>
+              <option value="estado-asc">
+                Estado: A-Z
+              </option>
+            </select>
+          </div>
         </div>
       </div>
 

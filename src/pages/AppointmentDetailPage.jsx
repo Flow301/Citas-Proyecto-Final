@@ -389,114 +389,119 @@ export function AppointmentDetailPage() {
                     Volver a citas
                 </Button>
 
-                {canEdit && (
-                    <Button
-                        nativeButton={false}
-                        variant="outline"
-                        render={
-                            <Link to={`/citas/${appointment.id}/editar`} />
-                        }
-                    >
-                        Editar cita
-                    </Button>
-                )}
+                {(canEdit || canCancel) && (
+                    <div className="flex flex-wrap gap-3">
 
-                {canCancel && (
-                    <AlertDialog
-                        open={cancelDialogOpen}
-                        onOpenChange={(open) => {
-                            setCancelDialogOpen(open)
+                        {canEdit && (
+                            <Button
+                                nativeButton={false}
+                                variant="outline"
+                                render={
+                                    <Link to={`/citas/${appointment.id}/editar`} />
+                                }
+                            >
+                                Editar cita
+                            </Button>
+                        )}
 
-                            if (!open) {
-                                setCancellationError("")
-                            }
-                        }}
-                    >
-                        <AlertDialogTrigger
-                            render={
-                                <Button
-                                    type="button"
-                                    variant="destructive"
-                                />
-                            }
-                        >
-                            Cancelar cita
-                        </AlertDialogTrigger>
+                        {canCancel && (
+                            <AlertDialog
+                                open={cancelDialogOpen}
+                                onOpenChange={(open) => {
+                                    setCancelDialogOpen(open)
 
-                        <AlertDialogContent>
-                            <AlertDialogHeader>
-                                <AlertDialogTitle>
-                                    ¿Cancelar esta cita?
-                                </AlertDialogTitle>
-
-                                <AlertDialogDescription>
-                                    La cita cambiará al estado cancelado y dejará
-                                    disponible el horario que ocupaba.
-                                </AlertDialogDescription>
-                            </AlertDialogHeader>
-
-                            <div className="space-y-2">
-                                <Label htmlFor="cancellation-reason">
-                                    Motivo de cancelación{" "}
-                                    <span className="text-destructive">*</span>
-                                </Label>
-
-                                <Input
-                                    id="cancellation-reason"
-                                    value={cancellationReason}
-                                    onChange={(event) => {
-                                        setCancellationReason(event.target.value)
-
-                                        if (cancellationError) {
-                                            setCancellationError("")
-                                        }
-                                    }}
-                                    maxLength={255}
-                                    placeholder="Escribe el motivo de la cancelación"
-                                    disabled={cancelling}
-                                    aria-invalid={Boolean(cancellationError)}
-                                    aria-describedby={
-                                        cancellationError
-                                            ? "cancellation-error"
-                                            : undefined
+                                    if (!open) {
+                                        setCancellationError("")
                                     }
-                                />
-
-                                <div className="flex justify-between gap-4 text-sm">
-                                    {cancellationError ? (
-                                        <p
-                                            id="cancellation-error"
-                                            role="alert"
-                                            className="text-destructive"
-                                        >
-                                            {cancellationError}
-                                        </p>
-                                    ) : (
-                                        <span />
-                                    )}
-
-                                    <span className="text-muted-foreground">
-                                        {cancellationReason.length}/255
-                                    </span>
-                                </div>
-                            </div>
-
-                            <AlertDialogFooter>
-                                <AlertDialogCancel disabled={cancelling}>
-                                    Volver
-                                </AlertDialogCancel>
-
-                                <AlertDialogAction
-                                    onClick={handleCancellation}
-                                    disabled={cancelling}
+                                }}
+                            >
+                                <AlertDialogTrigger
+                                    render={
+                                        <Button
+                                            type="button"
+                                            variant="destructive"
+                                        />
+                                    }
                                 >
-                                    {cancelling
-                                        ? "Cancelando..."
-                                        : "Confirmar cancelación"}
-                                </AlertDialogAction>
-                            </AlertDialogFooter>
-                        </AlertDialogContent>
-                    </AlertDialog>
+                                    Cancelar cita
+                                </AlertDialogTrigger>
+
+                                <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                        <AlertDialogTitle>
+                                            ¿Cancelar esta cita?
+                                        </AlertDialogTitle>
+
+                                        <AlertDialogDescription>
+                                            La cita cambiará al estado cancelado y dejará
+                                            disponible el horario que ocupaba.
+                                        </AlertDialogDescription>
+                                    </AlertDialogHeader>
+
+                                    <div className="space-y-2">
+                                        <Label htmlFor="cancellation-reason">
+                                            Motivo de cancelación{" "}
+                                            <span className="text-destructive">*</span>
+                                        </Label>
+
+                                        <Input
+                                            id="cancellation-reason"
+                                            value={cancellationReason}
+                                            onChange={(event) => {
+                                                setCancellationReason(event.target.value)
+
+                                                if (cancellationError) {
+                                                    setCancellationError("")
+                                                }
+                                            }}
+                                            maxLength={255}
+                                            placeholder="Escribe el motivo de la cancelación"
+                                            disabled={cancelling}
+                                            aria-invalid={Boolean(cancellationError)}
+                                            aria-describedby={
+                                                cancellationError
+                                                    ? "cancellation-error"
+                                                    : undefined
+                                            }
+                                        />
+
+                                        <div className="flex justify-between gap-4 text-sm">
+                                            {cancellationError ? (
+                                                <p
+                                                    id="cancellation-error"
+                                                    role="alert"
+                                                    className="text-destructive"
+                                                >
+                                                    {cancellationError}
+                                                </p>
+                                            ) : (
+                                                <span />
+                                            )}
+
+                                            <span className="text-muted-foreground">
+                                                {cancellationReason.length}/255
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    <AlertDialogFooter>
+                                        <AlertDialogCancel disabled={cancelling}>
+                                            Volver
+                                        </AlertDialogCancel>
+
+                                        <AlertDialogAction
+                                            onClick={handleCancellation}
+                                            disabled={cancelling}
+                                        >
+                                            {cancelling
+                                                ? "Cancelando..."
+                                                : "Confirmar cancelación"}
+                                        </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                </AlertDialogContent>
+                            </AlertDialog>
+                        )}
+                    </div>
                 )}
             </div>
 

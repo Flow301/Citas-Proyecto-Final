@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from "react"
 import { Link } from "react-router"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
 import {
     Card,
     CardContent,
@@ -70,9 +69,278 @@ function getStatusClass(statusName) {
     )
 }
 
+function timeToMinutes(timeValue) {
+    if (!timeValue) {
+        return null
+    }
+
+    const formattedTime = formatTime(timeValue)
+
+    if (formattedTime === "No disponible") {
+        return null
+    }
+
+    const [hours, minutes] = formattedTime
+        .split(":")
+        .map(Number)
+
+    if (
+        !Number.isFinite(hours) ||
+        !Number.isFinite(minutes)
+    ) {
+        return null
+    }
+
+    return hours * 60 + minutes
+}
+
+function minutesToTime(totalMinutes) {
+    const hours = Math.floor(totalMinutes / 60)
+    const minutes = totalMinutes % 60
+
+    return `${String(hours).padStart(2, "0")}:${String(
+        minutes
+    ).padStart(2, "0")}`
+}
+
+function intervalsOverlap(
+    firstStart,
+    firstEnd,
+    secondStart,
+    secondEnd
+) {
+    return (
+        firstStart < secondEnd &&
+        firstEnd > secondStart
+    )
+}
+
+function addIntervalLimits(limits, interval) {
+    const start = timeToMinutes(interval?.horaInicio)
+    const end = timeToMinutes(interval?.horaFin)
+
+    if (start !== null && end !== null && start < end) {
+        limits.add(start)
+        limits.add(end)
+    }
+}
+
+function buildAgendaSegments(agendaData) {
+    const limits = new Set()
+
+    const schedules = agendaData?.horarios ?? []
+    const employees = agendaData?.empleados ?? []
+    const generalRestrictions =
+        agendaData?.restriccionesGenerales ?? []
+
+    schedules
+        .filter((schedule) => schedule.activo !== false)
+        .forEach((schedule) =>
+            addIntervalLimits(limits, schedule)
+        )
+
+    generalRestrictions
+        .filter(
+            (restriction) =>
+                restriction.activo !== false &&
+                !restriction.todoElDia
+        )
+        .forEach((restriction) =>
+            addIntervalLimits(limits, restriction)
+        )
+
+    employees.forEach((employee) => {
+        ;(employee.citas ?? []).forEach((appointment) =>
+            addIntervalLimits(limits, appointment)
+        )
+
+        ;(employee.restricciones ?? [])
+            .filter(
+                (restriction) =>
+                    restriction.activo !== false &&
+                    !restriction.todoElDia
+            )
+            .forEach((restriction) =>
+                addIntervalLimits(limits, restriction)
+            )
+    })
+
+    const orderedLimits = [...limits].sort(
+        (first, second) => first - second
+    )
+
+    return orderedLimits
+        .slice(0, -1)
+        .map((start, index) => ({
+            start,
+            end: orderedLimits[index + 1],
+            label: `${minutesToTime(start)} - ${minutesToTime(
+                orderedLimits[index + 1]
+            )}`,
+        }))
+        .filter((segment) => segment.start < segment.end)
+}
+
+function restrictionAffectsSegment(
+    restriction,
+    segment
+) {
+    if (restriction.activo === false) {
+        return false
+    }
+
+    if (restriction.todoElDia) {
+        return true
+    }
+
+    const start = timeToMinutes(
+        restriction.horaInicio
+    )
+    const end = timeToMinutes(restriction.horaFin)
+
+    if (start === null || end === null) {
+        return false
+    }
+
+    return intervalsOverlap(
+        segment.start,
+        segment.end,
+        start,
+        end
+    )
+}
+
+function appointmentAffectsSegment(
+    appointment,
+    segment
+) {
+    const start = timeToMinutes(
+        appointment.horaInicio
+    )
+    const end = timeToMinutes(appointment.horaFin)
+
+    if (start === null || end === null) {
+        return false
+    }
+
+    return intervalsOverlap(
+        segment.start,
+        segment.end,
+        start,
+        end
+    )
+}
+
+function scheduleContainsSegment(schedule, segment) {
+    if (schedule.activo === false) {
+        return false
+    }
+
+    const start = timeToMinutes(schedule.horaInicio)
+    const end = timeToMinutes(schedule.horaFin)
+
+    if (start === null || end === null) {
+        return false
+    }
+
+    return (
+        segment.start >= start &&
+        segment.end <= end
+    )
+}
+
+function getAgendaCell(agendaData, employee, segment) {
+    const generalRestriction = (
+        agendaData?.restriccionesGenerales ?? []
+    ).find((restriction) =>
+        restrictionAffectsSegment(
+            restriction,
+            segment
+        )
+    )
+
+    if (generalRestriction) {
+        return {
+            type: "restriction",
+            restriction: generalRestriction,
+            label:
+                generalRestriction.motivo ||
+                "Restricción general",
+        }
+    }
+
+    const employeeRestriction = (
+        employee.restricciones ?? []
+    ).find((restriction) =>
+        restrictionAffectsSegment(
+            restriction,
+            segment
+        )
+    )
+
+    if (employeeRestriction) {
+        return {
+            type: "restriction",
+            restriction: employeeRestriction,
+            label:
+                employeeRestriction.motivo ||
+                "Restricción del empleado",
+        }
+    }
+
+    const appointment = (
+        employee.citas ?? []
+    ).find((item) =>
+        appointmentAffectsSegment(item, segment)
+    )
+
+    if (appointment) {
+        return {
+            type: "appointment",
+            appointment,
+            label:
+                appointment.servicio?.nombre ||
+                "Cita programada",
+        }
+    }
+
+    const isOpen = (
+        agendaData?.horarios ?? []
+    ).some((schedule) =>
+        scheduleContainsSegment(schedule, segment)
+    )
+
+    if (isOpen) {
+        return {
+            type: "available",
+            label: "Disponible",
+        }
+    }
+
+    return {
+        type: "closed",
+        label: "Fuera de horario",
+    }
+}
+
+function getAgendaCellClass(cellType) {
+    const classes = {
+        appointment:
+            "border-blue-200 bg-blue-50 text-blue-950",
+        restriction:
+            "border-red-200 bg-red-50 text-red-950",
+        available:
+            "border-green-200 bg-green-50 text-green-900",
+        closed:
+            "border-muted bg-muted/50 text-muted-foreground",
+    }
+
+    return classes[cellType] ?? classes.closed
+}
+
 export function DailyAgendaPage() {
     const [date, setDate] = useState(getCurrentDate)
-    const [appointments, setAppointments] = useState([])
+    const [agenda, setAgenda] = useState(null)
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState("")
 
@@ -85,18 +353,7 @@ export function DailyAgendaPage() {
                     return
                 }
 
-                const responseData = response.data
-
-                const dailyAppointments = (
-                    responseData?.empleados ?? []
-                ).flatMap((employee) =>
-                    (employee.citas ?? []).map((appointment) => ({
-                        ...appointment,
-                        empleado: appointment.empleado ?? employee,
-                    }))
-                )
-
-                setAppointments(dailyAppointments)
+                setAgenda(response.data)
 
             })
             .catch((requestError) => {
@@ -116,16 +373,36 @@ export function DailyAgendaPage() {
     }, [date])
 
     const orderedAppointments = useMemo(() => {
-        return [...appointments].sort((first, second) =>
+        const dailyAppointments = (
+            agenda?.empleados ?? []
+        ).flatMap((employee) =>
+            (employee.citas ?? []).map((appointment) => ({
+                ...appointment,
+                empleado:
+                    appointment.empleado ?? employee,
+            }))
+        )
+
+        return dailyAppointments.sort((first, second) =>
             String(first.horaInicio).localeCompare(
                 String(second.horaInicio)
             )
         )
-    }, [appointments])
+    }, [agenda])
+
+        const employees = useMemo(
+        () => agenda?.empleados ?? [],
+        [agenda]
+    )
+
+    const agendaSegments = useMemo(
+        () => buildAgendaSegments(agenda),
+        [agenda]
+    )
 
     function handleDateChange(event) {
         setDate(event.target.value)
-        setAppointments([])
+        setAgenda(null)
         setError("")
         setLoading(true)
     }
@@ -183,104 +460,187 @@ export function DailyAgendaPage() {
                 </Card>
             )}
 
-            {!loading && !error && (
+                        {!loading && !error && (
                 <Card>
                     <CardHeader>
                         <CardTitle>
-                            Citas del día ({orderedAppointments.length})
+                            Agenda del día (
+                            {orderedAppointments.length} citas)
                         </CardTitle>
+
+                        <div className="flex flex-wrap gap-3 text-sm">
+                            <span className="rounded-md border border-green-200 bg-green-50 px-2 py-1 text-green-900">
+                                Disponible
+                            </span>
+
+                            <span className="rounded-md border border-blue-200 bg-blue-50 px-2 py-1 text-blue-950">
+                                Cita
+                            </span>
+
+                            <span className="rounded-md border border-red-200 bg-red-50 px-2 py-1 text-red-950">
+                                Restricción
+                            </span>
+
+                            <span className="rounded-md border bg-muted/50 px-2 py-1 text-muted-foreground">
+                                Fuera de horario
+                            </span>
+                        </div>
                     </CardHeader>
 
                     <CardContent>
-                        {orderedAppointments.length === 0 ? (
+                        {employees.length === 0 ? (
                             <div className="py-8 text-center">
                                 <p className="font-medium">
-                                    No hay citas para esta fecha.
+                                    No hay empleados activos.
                                 </p>
 
                                 <p className="text-muted-foreground">
-                                    Selecciona otra fecha para consultar la
-                                    agenda.
+                                    No es posible construir la agenda
+                                    para esta fecha.
+                                </p>
+                            </div>
+                        ) : agendaSegments.length === 0 ? (
+                            <div className="py-8 text-center">
+                                <p className="font-medium">
+                                    No hay horario de atención para
+                                    esta fecha.
+                                </p>
+
+                                <p className="text-muted-foreground">
+                                    Selecciona otra fecha para
+                                    consultar la agenda.
                                 </p>
                             </div>
                         ) : (
-                            <div className="space-y-4">
-                                {orderedAppointments.map(
-                                    (appointment) => (
+                            <div className="overflow-x-auto">
+                                <div
+                                    className="grid min-w-max gap-2"
+                                    style={{
+                                        gridTemplateColumns: `minmax(140px, 180px) repeat(${employees.length}, minmax(220px, 1fr))`,
+                                    }}
+                                >
+                                    <div className="sticky left-0 z-10 rounded-md border bg-background p-3 font-semibold">
+                                        Horario
+                                    </div>
+
+                                    {employees.map((employee) => (
                                         <div
-                                            key={appointment.id}
-                                            className="rounded-lg border p-4"
+                                            key={employee.id}
+                                            className="rounded-md border bg-background p-3 font-semibold"
                                         >
-                                            <div className="flex flex-wrap items-start justify-between gap-4">
-                                                <div>
-                                                    <p className="text-lg font-semibold">
-                                                        {formatTime(
-                                                            appointment.horaInicio
-                                                        )}{" "}
-                                                        -{" "}
-                                                        {formatTime(
-                                                            appointment.horaFin
-                                                        )}
-                                                    </p>
+                                            {getFullName(
+                                                employee.usuario
+                                            )}
+                                        </div>
+                                    ))}
 
-                                                    <p className="text-muted-foreground">
-                                                        {appointment.servicio?.nombre ??
-                                                            "Servicio no disponible"}
-                                                    </p>
-                                                </div>
-
-                                                <Badge
-                                                    variant="outline"
-                                                    className={getStatusClass(
-                                                        appointment.estadoCita?.nombre
-                                                    )}
-                                                >
-                                                    {appointment.estadoCita?.nombre ??
-                                                        "Estado no disponible"}
-                                                </Badge>
+                                    {agendaSegments.map((segment) => (
+                                        <div
+                                            key={segment.label}
+                                            className="contents"
+                                        >
+                                            <div className="sticky left-0 z-10 rounded-md border bg-background p-3 font-medium">
+                                                {segment.label}
                                             </div>
 
-                                            <dl className="mt-4 grid gap-4 sm:grid-cols-2">
-                                                <div>
-                                                    <dt className="text-sm text-muted-foreground">
-                                                        Cliente
-                                                    </dt>
+                                            {employees.map(
+                                                (employee) => {
+                                                    const cell =
+                                                        getAgendaCell(
+                                                            agenda,
+                                                            employee,
+                                                            segment
+                                                        )
 
-                                                    <dd className="font-medium">
-                                                        {getFullName(
-                                                            appointment.cliente
-                                                        )}
-                                                    </dd>
-                                                </div>
+                                                    return (
+                                                        <div
+                                                            key={`${employee.id}-${segment.label}`}
+                                                            className={`min-h-24 rounded-md border p-3 ${getAgendaCellClass(
+                                                                cell.type
+                                                            )}`}
+                                                        >
+                                                            {cell.type ===
+                                                            "appointment" ? (
+                                                                <Link
+                                                                    to={`/citas/${cell.appointment.id}`}
+                                                                    className="block space-y-2"
+                                                                >
+                                                                    <p className="font-semibold">
+                                                                        {
+                                                                            cell
+                                                                                .appointment
+                                                                                .servicio
+                                                                                ?.nombre
+                                                                        }
+                                                                    </p>
 
-                                                <div>
-                                                    <dt className="text-sm text-muted-foreground">
-                                                        Empleado
-                                                    </dt>
+                                                                    <p className="text-sm">
+                                                                        Cliente:{" "}
+                                                                        {getFullName(
+                                                                            cell
+                                                                                .appointment
+                                                                                .cliente
+                                                                        )}
+                                                                    </p>
 
-                                                    <dd className="font-medium">
-                                                        {getFullName(
-                                                            appointment.empleado?.usuario
-                                                        )}
-                                                    </dd>
-                                                </div>
-                                            </dl>
+                                                                    <p className="text-xs">
+                                                                        {formatTime(
+                                                                            cell
+                                                                                .appointment
+                                                                                .horaInicio
+                                                                        )}{" "}
+                                                                        -{" "}
+                                                                        {formatTime(
+                                                                            cell
+                                                                                .appointment
+                                                                                .horaFin
+                                                                        )}
+                                                                    </p>
 
-                                            <Button
-                                                nativeButton={false}
-                                                variant="outline"
-                                                className="mt-4"
-                                                render={
-                                                    <Link
-                                                        to={`/citas/${appointment.id}`}
-                                                    />
+                                                                    <Badge
+                                                                        variant="outline"
+                                                                        className={getStatusClass(
+                                                                            cell
+                                                                                .appointment
+                                                                                .estadoCita
+                                                                                ?.nombre
+                                                                        )}
+                                                                    >
+                                                                        {cell
+                                                                            .appointment
+                                                                            .estadoCita
+                                                                            ?.nombre ??
+                                                                            "Sin estado"}
+                                                                    </Badge>
+
+                                                                    <p className="text-xs underline">
+                                                                        Ver detalle
+                                                                    </p>
+                                                                </Link>
+                                                            ) : (
+                                                                <div className="space-y-1">
+                                                                    <p className="font-semibold">
+                                                                        {
+                                                                            cell.label
+                                                                        }
+                                                                    </p>
+
+                                                                    {cell.type ===
+                                                                        "restriction" && (
+                                                                        <p className="text-xs">
+                                                                            No
+                                                                            disponible
+                                                                        </p>
+                                                                    )}
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    )
                                                 }
-                                            >
-                                                Ver detalle
-                                            </Button>
+                                            )}
                                         </div>
-                                    )
-                                )}
+                                    ))}
+                                </div>
                             </div>
                         )}
                     </CardContent>

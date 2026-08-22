@@ -61,7 +61,7 @@ export function AdditionalServiceDetailPage() {
   const [statusError, setStatusError] = useState("")
 
   const isAdministrator =
-    user.rol?.nombre === "Administrador"
+    user?.rol?.nombre === "Administrador"
 
   useEffect(() => {
     let isActive = true
@@ -147,6 +147,31 @@ export function AdditionalServiceDetailPage() {
       </Card>
     )
   }
+
+  if (!additional.activo && !isAdministrator) {
+  return (
+    <Card className="mx-auto max-w-3xl">
+      <CardContent className="space-y-4 p-8 text-center">
+        <p className="font-medium">
+          Este servicio adicional no está disponible
+          actualmente.
+        </p>
+
+        <p className="text-sm text-muted-foreground">
+          Consulta los demás servicios adicionales activos.
+        </p>
+
+        <Button
+          nativeButton={false}
+          variant="outline"
+          render={<Link to="/servicios-adicionales" />}
+        >
+          Volver a adicionales
+        </Button>
+      </CardContent>
+    </Card>
+  )
+}
 
   return (
     <div className="space-y-4">

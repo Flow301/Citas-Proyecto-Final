@@ -45,7 +45,7 @@ export function ServiceDetailPage() {
   const [changingStatus, setChangingStatus] = useState(false)
   const [statusError, setStatusError] = useState("")
   const { user } = useAuth()
-  const isAdministrator = user.rol?.nombre === "Administrador"
+  const isAdministrator = user?.rol?.nombre === "Administrador"
 
   useEffect(() => {
     async function loadService() {
@@ -128,6 +128,31 @@ export function ServiceDetailPage() {
       </Card>
     )
   }
+
+  if (!service.activo && !isAdministrator) {
+  return (
+    <Card className="mx-auto max-w-3xl">
+      <CardContent className="space-y-4 p-8 text-center">
+        <p className="font-medium">
+          Este servicio no está disponible actualmente.
+        </p>
+
+        <p className="text-sm text-muted-foreground">
+          Consulta los demás servicios activos del centro de
+          tutorías.
+        </p>
+
+        <Button
+          nativeButton={false}
+          variant="outline"
+          render={<Link to="/servicios" />}
+        >
+          Volver a servicios
+        </Button>
+      </CardContent>
+    </Card>
+  )
+}
 
   const imageUrl = getServiceImageUrl(service.imagen)
 

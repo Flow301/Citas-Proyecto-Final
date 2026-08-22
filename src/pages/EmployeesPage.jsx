@@ -41,7 +41,7 @@ function getEmployeeName(employee) {
 export function EmployeesPage() {
   const { user } = useAuth()
   const isAdministrator =
-    user.rol?.nombre === "Administrador"
+    user?.rol?.nombre === "Administrador"
   const [employees, setEmployees] = useState([])
   const [specialties, setSpecialties] = useState([])
   const [sortOrder, setSortOrder] = useState("nombre-asc")
@@ -105,29 +105,35 @@ export function EmployeesPage() {
   )
 
   const sortedEmployees = useMemo(() => {
-    return [...employees].sort((firstEmployee, secondEmployee) => {
-      const firstName = getEmployeeName(firstEmployee)
-      const secondName = getEmployeeName(secondEmployee)
+    const visibleEmployees = isAdministrator
+      ? employees
+      : employees.filter((employee) => employee.activo)
 
-      if (sortOrder === "nombre-desc") {
-        return secondName.localeCompare(firstName)
+    return [...visibleEmployees].sort(
+      (firstEmployee, secondEmployee) => {
+        const firstName = getEmployeeName(firstEmployee)
+        const secondName = getEmployeeName(secondEmployee)
+
+        if (sortOrder === "nombre-desc") {
+          return secondName.localeCompare(firstName)
+        }
+
+        if (sortOrder === "codigo-asc") {
+          return firstEmployee.codigoEmpleado.localeCompare(
+            secondEmployee.codigoEmpleado
+          )
+        }
+
+        if (sortOrder === "codigo-desc") {
+          return secondEmployee.codigoEmpleado.localeCompare(
+            firstEmployee.codigoEmpleado
+          )
+        }
+
+        return firstName.localeCompare(secondName)
       }
-
-      if (sortOrder === "codigo-asc") {
-        return firstEmployee.codigoEmpleado.localeCompare(
-          secondEmployee.codigoEmpleado
-        )
-      }
-
-      if (sortOrder === "codigo-desc") {
-        return secondEmployee.codigoEmpleado.localeCompare(
-          firstEmployee.codigoEmpleado
-        )
-      }
-
-      return firstName.localeCompare(secondName)
-    })
-  }, [employees, sortOrder])
+    )
+  }, [employees, sortOrder, isAdministrator])
 
   return (
     <div className="space-y-6">

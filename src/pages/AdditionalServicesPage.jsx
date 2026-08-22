@@ -21,7 +21,7 @@ async function requestAdditionalServices() {
 
 export function AdditionalServicesPage() {
   const { user } = useAuth()
-  const isAdministrator = user.rol?.nombre === "Administrador"
+  const isAdministrator = user?.rol?.nombre === "Administrador"
   const [additionals, setAdditionals] = useState([])
   const [sortOrder, setSortOrder] = useState("nombre-asc")
   const [loading, setLoading] = useState(true)
@@ -69,7 +69,12 @@ export function AdditionalServicesPage() {
   }, [])
 
   const sortedAdditionals = useMemo(() => {
-    return [...additionals].sort((firstAdditional, secondAdditional) => {
+  const visibleAdditionals = isAdministrator
+    ? additionals
+    : additionals.filter((additional) => additional.activo)
+
+  return [...visibleAdditionals].sort(
+    (firstAdditional, secondAdditional) => {
       if (sortOrder === "nombre-desc") {
         return secondAdditional.nombre.localeCompare(
           firstAdditional.nombre
@@ -93,8 +98,9 @@ export function AdditionalServicesPage() {
       return firstAdditional.nombre.localeCompare(
         secondAdditional.nombre
       )
-    })
-  }, [additionals, sortOrder])
+    }
+  )
+}, [additionals, sortOrder, isAdministrator])
 
   return (
     <div className="space-y-6">

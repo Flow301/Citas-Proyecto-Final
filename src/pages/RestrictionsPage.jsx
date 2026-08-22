@@ -68,7 +68,7 @@ function getRestrictionSchedule(restriction) {
 export function RestrictionsPage() {
   const { user } = useAuth()
   const isAdministrator =
-    user.rol?.nombre === "Administrador"
+    user?.rol?.nombre === "Administrador"
   const [restrictions, setRestrictions] = useState([])
   const [sorting, setSorting] = useState("fecha-asc")
   const [loading, setLoading] = useState(true)
@@ -100,21 +100,27 @@ export function RestrictionsPage() {
   }, [])
 
   const sortedRestrictions = useMemo(() => {
-    return [...restrictions].sort((first, second) => {
-      if (sorting === "fecha-desc") {
-        return second.fecha.localeCompare(first.fecha)
-      }
+  const visibleRestrictions = isAdministrator
+    ? restrictions
+    : restrictions.filter(
+        (restriction) => restriction.activo
+      )
 
-      if (sorting === "empleado-asc") {
-        return getEmployeeName(first).localeCompare(
-          getEmployeeName(second),
-          "es"
-        )
-      }
+  return [...visibleRestrictions].sort((first, second) => {
+    if (sorting === "fecha-desc") {
+      return second.fecha.localeCompare(first.fecha)
+    }
 
-      return first.fecha.localeCompare(second.fecha)
-    })
-  }, [restrictions, sorting])
+    if (sorting === "empleado-asc") {
+      return getEmployeeName(first).localeCompare(
+        getEmployeeName(second),
+        "es"
+      )
+    }
+
+    return first.fecha.localeCompare(second.fecha)
+  })
+}, [restrictions, sorting, isAdministrator])
 
   return (
     <div className="space-y-6">

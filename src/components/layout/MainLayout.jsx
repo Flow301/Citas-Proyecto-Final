@@ -1,8 +1,18 @@
-import { NavLink, Outlet, useNavigate } from "react-router"
+import {
+  NavLink,
+  Outlet,
+  useNavigate,
+} from "react-router"
 import { GraduationCap } from "lucide-react"
 import { useAuth } from "@/context/auth-context"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
+
+const authenticatedRoles = [
+  "Administrador",
+  "Empleado",
+  "Cliente",
+]
 
 const navigationItems = [
   {
@@ -12,15 +22,16 @@ const navigationItems = [
   {
     label: "Mi perfil",
     path: "/perfil",
+    roles: authenticatedRoles,
   },
   {
     label: "Servicios",
     path: "/servicios",
   },
   {
-  label: "Horarios",
-  path: "/horarios",
-},
+    label: "Horarios",
+    path: "/horarios",
+  },
   {
     label: "Adicionales",
     path: "/servicios-adicionales",
@@ -31,63 +42,66 @@ const navigationItems = [
     roles: ["Administrador", "Empleado"],
   },
   {
-  label: "Restricciones",
-  path: "/restricciones",
-  roles: ["Administrador", "Empleado"],
-},
-{
-  label: "Citas",
-  path: "/citas",
-  roles: ["Administrador"],
-},
-{
-  label: "Citas asignadas",
-  path: "/citas",
-  roles: ["Empleado"],
-},
-{
-  label: "Mis citas",
-  path: "/citas",
-  roles: ["Cliente"],
-},
-{
-  label: "Agenda diaria",
-  path: "/agenda-diaria",
-  roles: ["Administrador"],
-},
+    label: "Restricciones",
+    path: "/restricciones",
+    roles: ["Administrador", "Empleado"],
+  },
+  {
+    label: "Citas",
+    path: "/citas",
+    roles: ["Administrador"],
+  },
+  {
+    label: "Citas asignadas",
+    path: "/citas",
+    roles: ["Empleado"],
+  },
+  {
+    label: "Mis citas",
+    path: "/citas",
+    roles: ["Cliente"],
+  },
+  {
+    label: "Agenda diaria",
+    path: "/agenda-diaria",
+    roles: ["Administrador"],
+  },
 ]
 
 export function MainLayout() {
   const navigate = useNavigate()
   const { user, logout } = useAuth()
+  const roleName = user?.rol?.nombre
 
- const navigationWithEmployeeAgenda = [
-  ...navigationItems,
-  ...(user.rol?.nombre === "Empleado" && user.empleado?.id
-    ? [
-        {
-          label: "Mi agenda",
-          path: `/empleados/${user.empleado.id}/agenda`,
-          roles: ["Empleado"],
-        },
-      ]
-    : []),
-]
+  const navigationWithEmployeeAgenda = [
+    ...navigationItems,
+    ...(roleName === "Empleado" && user?.empleado?.id
+      ? [
+          {
+            label: "Mi agenda",
+            path: `/empleados/${user.empleado.id}/agenda`,
+            roles: ["Empleado"],
+          },
+        ]
+      : []),
+  ]
 
-const visibleNavigationItems =
-  navigationWithEmployeeAgenda.filter(
-    (item) =>
-      !item.roles ||
-      item.roles.includes(user.rol?.nombre)
-  )
+  const visibleNavigationItems =
+    navigationWithEmployeeAgenda.filter(
+      (item) =>
+        !item.roles ||
+        item.roles.includes(roleName)
+    )
 
-  const fullName = [user.nombre, user.primerApellido]
-    .filter(Boolean)
-    .join(" ")
+  const fullName = user
+    ? [user.nombre, user.primerApellido]
+        .filter(Boolean)
+        .join(" ")
+    : ""
 
   function handleLogout() {
     logout()
-    navigate("/login", { replace: true })
+    navigate("/", { replace: true })
   }
 
   return (
@@ -101,33 +115,61 @@ const visibleNavigationItems =
               aria-label="Ir al inicio"
             >
               <div className="rounded-md bg-primary p-2 text-primary-foreground">
-                <GraduationCap className="size-5" aria-hidden="true" />
+                <GraduationCap
+                  className="size-5"
+                  aria-hidden="true"
+                />
               </div>
 
               <div>
-                <p className="font-semibold">Centro de Tutorías</p>
+                <p className="font-semibold">
+                  Centro de Tutorías
+                </p>
+
                 <p className="text-xs text-muted-foreground">
                   Gestión académica
                 </p>
               </div>
             </NavLink>
 
-            <div className="flex items-center gap-3">
-              <div className="hidden text-right sm:block">
-                <p className="text-sm font-medium">{fullName}</p>
-                <p className="text-xs text-muted-foreground">
-                  {user.rol?.nombre}
-                </p>
-              </div>
+            {user ? (
+              <div className="flex items-center gap-3">
+                <div className="hidden text-right sm:block">
+                  <p className="text-sm font-medium">
+                    {fullName}
+                  </p>
 
-              <Button
-                type="button"
-                variant="outline"
-                onClick={handleLogout}
-              >
-                Cerrar sesión
-              </Button>
-            </div>
+                  <p className="text-xs text-muted-foreground">
+                    {roleName}
+                  </p>
+                </div>
+
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleLogout}
+                >
+                  Cerrar sesión
+                </Button>
+              </div>
+            ) : (
+              <div className="flex flex-wrap items-center gap-2">
+                <Button
+                  nativeButton={false}
+                  variant="outline"
+                  render={<NavLink to="/login" />}
+                >
+                  Iniciar sesión
+                </Button>
+
+                <Button
+                  nativeButton={false}
+                  render={<NavLink to="/registro" />}
+                >
+                  Registrarse
+                </Button>
+              </div>
+            )}
           </div>
 
           <nav
@@ -136,7 +178,7 @@ const visibleNavigationItems =
           >
             {visibleNavigationItems.map((item) => (
               <NavLink
-                key={item.path}
+                key={`${item.label}-${item.path}`}
                 to={item.path}
                 end={item.path === "/"}
                 className={({ isActive }) =>

@@ -80,7 +80,7 @@ export function EmployeeDetailPage() {
   const { id } = useParams()
   const { user } = useAuth()
   const isAdministrator =
-    user.rol?.nombre === "Administrador"
+    user?.rol?.nombre === "Administrador"
   const [employee, setEmployee] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
@@ -187,9 +187,46 @@ export function EmployeeDetailPage() {
     )
   }
 
+  if (!employee.activo && !isAdministrator) {
+    return (
+      <Card className="mx-auto max-w-3xl">
+        <CardContent className="space-y-4 p-8 text-center">
+          <p className="font-medium">
+            Este empleado no está disponible actualmente.
+          </p>
+
+          <Button
+            nativeButton={false}
+            variant="outline"
+            render={<Link to="/empleados" />}
+          >
+            Volver a empleados
+          </Button>
+        </CardContent>
+      </Card>
+    )
+  }
+
   const fullName = getFullName(employee.usuario)
-  const services = employee.servicios || []
-  const restrictions = employee.restricciones || []
+
+  const employeeServices = employee.servicios || []
+  const employeeRestrictions = employee.restricciones || []
+
+  const services = isAdministrator
+    ? employeeServices
+    : employeeServices.filter((service) => service.activo)
+
+  const restrictions = isAdministrator
+    ? employeeRestrictions
+    : employeeRestrictions.filter(
+      (restriction) => restriction.activo
+    )
+
+  const isOwnEmployee =
+    String(user?.empleado?.id) === String(employee.id)
+
+  const canViewAppointments =
+    isAdministrator || isOwnEmployee
 
   return (
     <div className="space-y-6">
@@ -474,65 +511,67 @@ export function EmployeeDetailPage() {
         )}
       </section>
 
-      <section className="mx-auto max-w-5xl space-y-4">
-        <div>
-          <h2 className="text-xl font-semibold">
-            Citas asignadas
-          </h2>
+      {canViewAppointments && (
+        <section className="mx-auto max-w-5xl space-y-4">
+          <div>
+            <h2 className="text-xl font-semibold">
+              Citas asignadas
+            </h2>
 
-          <p className="text-sm text-muted-foreground">
-            Total registrado: {sortedAppointments.length}.
-          </p>
-        </div>
-
-        {sortedAppointments.length === 0 ? (
-          <Card>
-            <CardContent className="p-6 text-center text-muted-foreground">
-              No hay citas asignadas.
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="space-y-3">
-            {sortedAppointments.map((appointment) => (
-              <Card key={appointment.id}>
-                <CardContent className="grid gap-4 p-5 sm:grid-cols-2 lg:grid-cols-4">
-                  <ProfileItem
-                    label="Cliente"
-                    value={getFullName(appointment.cliente)}
-                  />
-
-                  <ProfileItem
-                    label="Servicio"
-                    value={appointment.servicio?.nombre}
-                  />
-
-                  <ProfileItem
-                    label="Fecha y hora"
-                    value={`${formatDate(
-                      appointment.fecha
-                    )}, ${formatTime(
-                      appointment.horaInicio
-                    )}–${formatTime(
-                      appointment.horaFin
-                    )}`}
-                  />
-
-                  <div className="space-y-1">
-                    <p className="text-sm text-muted-foreground">
-                      Estado
-                    </p>
-
-                    <Badge variant="secondary">
-                      {appointment.estadoCita?.nombre ||
-                        "No disponible"}
-                    </Badge>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+            <p className="text-sm text-muted-foreground">
+              Total registrado: {sortedAppointments.length}.
+            </p>
           </div>
-        )}
-      </section>
+
+          {sortedAppointments.length === 0 ? (
+            <Card>
+              <CardContent className="p-6 text-center text-muted-foreground">
+                No hay citas asignadas.
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="space-y-3">
+              {sortedAppointments.map((appointment) => (
+                <Card key={appointment.id}>
+                  <CardContent className="grid gap-4 p-5 sm:grid-cols-2 lg:grid-cols-4">
+                    <ProfileItem
+                      label="Cliente"
+                      value={getFullName(appointment.cliente)}
+                    />
+
+                    <ProfileItem
+                      label="Servicio"
+                      value={appointment.servicio?.nombre}
+                    />
+
+                    <ProfileItem
+                      label="Fecha y hora"
+                      value={`${formatDate(
+                        appointment.fecha
+                      )}, ${formatTime(
+                        appointment.horaInicio
+                      )}–${formatTime(
+                        appointment.horaFin
+                      )}`}
+                    />
+
+                    <div className="space-y-1">
+                      <p className="text-sm text-muted-foreground">
+                        Estado
+                      </p>
+
+                      <Badge variant="secondary">
+                        {appointment.estadoCita?.nombre ||
+                          "No disponible"}
+                      </Badge>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </section>
+      )}
     </div>
   )
 }

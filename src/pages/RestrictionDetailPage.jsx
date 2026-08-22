@@ -85,7 +85,7 @@ export function RestrictionDetailPage() {
   const { id } = useParams()
   const { user } = useAuth()
   const isAdministrator =
-    user.rol?.nombre === "Administrador"
+    user?.rol?.nombre === "Administrador"
   const [restriction, setRestriction] = useState(null)
   const [restrictionType, setRestrictionType] =
     useState(null)
@@ -194,6 +194,30 @@ export function RestrictionDetailPage() {
       </Card>
     )
   }
+
+  if (!restriction.activo && !isAdministrator) {
+  return (
+    <Card className="mx-auto max-w-3xl">
+      <CardContent className="space-y-4 p-8 text-center">
+        <p className="font-medium">
+          Esta restricción ya no está activa.
+        </p>
+
+        <p className="text-sm text-muted-foreground">
+          Consulta las restricciones activas registradas.
+        </p>
+
+        <Button
+          nativeButton={false}
+          variant="outline"
+          render={<Link to="/restricciones" />}
+        >
+          Volver a restricciones
+        </Button>
+      </CardContent>
+    </Card>
+  )
+}
 
   const typeName =
     restriction.tipoRestriccion?.nombre ??

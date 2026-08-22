@@ -36,7 +36,8 @@ export function ServicesPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
   const { user } = useAuth()
-  const isAdministrator = user.rol?.nombre === "Administrador"
+  const isAdministrator =
+  user?.rol?.nombre === "Administrador"
 
   async function loadData() {
     setLoading(true)
@@ -93,7 +94,12 @@ export function ServicesPage() {
   )
 
   const sortedServices = useMemo(() => {
-    return [...services].sort((firstService, secondService) => {
+  const visibleServices = isAdministrator
+    ? services
+    : services.filter((service) => service.activo)
+
+  return [...visibleServices].sort(
+    (firstService, secondService) => {
       if (sortOrder === "nombre-desc") {
         return secondService.nombre.localeCompare(firstService.nombre)
       }
@@ -113,8 +119,9 @@ export function ServicesPage() {
       }
 
       return firstService.nombre.localeCompare(secondService.nombre)
-    })
-  }, [services, sortOrder])
+        }
+  )
+}, [services, sortOrder, isAdministrator])
 
   return (
     <div className="space-y-6">

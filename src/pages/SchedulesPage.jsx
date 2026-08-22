@@ -43,12 +43,12 @@ export function SchedulesPage() {
   const [schedules, setSchedules] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
-    const [changingScheduleId, setChangingScheduleId] =
+  const [changingScheduleId, setChangingScheduleId] =
     useState(null)
   const [statusError, setStatusError] = useState("")
   const { user } = useAuth()
   const isAdministrator =
-    user.rol?.nombre === "Administrador"
+    user?.rol?.nombre === "Administrador"
 
   useEffect(() => {
     let isActive = true
@@ -84,18 +84,25 @@ export function SchedulesPage() {
   }, [weekDays])
 
   function getDaySchedules(day) {
-    const schedulesFromList = schedules.filter(
-      (schedule) => schedule.diaSemanaId === day.id
-    )
+  const schedulesFromList = schedules.filter(
+    (schedule) => schedule.diaSemanaId === day.id
+  )
 
-    if (schedulesFromList.length > 0) {
-      return schedulesFromList
-    }
+  const daySchedules =
+    schedulesFromList.length > 0
+      ? schedulesFromList
+      : day.horarios ?? []
 
-    return day.horarios ?? []
+  if (isAdministrator) {
+    return daySchedules
   }
-  
-    async function handleStatusChange(schedule) {
+
+  return daySchedules.filter(
+    (schedule) => schedule.activo
+  )
+}
+
+  async function handleStatusChange(schedule) {
     const newStatus = !schedule.activo
 
     setChangingScheduleId(schedule.id)
@@ -111,9 +118,9 @@ export function SchedulesPage() {
         currentSchedules.map((currentSchedule) =>
           currentSchedule.id === schedule.id
             ? {
-                ...currentSchedule,
-                activo: newStatus,
-              }
+              ...currentSchedule,
+              activo: newStatus,
+            }
             : currentSchedule
         )
       )
@@ -148,7 +155,7 @@ export function SchedulesPage() {
         )}
       </div>
 
-            {statusError && (
+      {statusError && (
         <Card>
           <CardContent className="p-4 text-center">
             <p
@@ -224,7 +231,7 @@ export function SchedulesPage() {
                             {formatTime(schedule.horaFin)}
                           </p>
 
-                                                    <div className="flex flex-wrap items-center gap-2">
+                          <div className="flex flex-wrap items-center gap-2">
                             <ActiveStatusBadge
                               active={schedule.activo}
                             />
@@ -244,7 +251,7 @@ export function SchedulesPage() {
                                   Editar
                                 </Button>
 
-                                                                <AlertDialog>
+                                <AlertDialog>
                                   <AlertDialogTrigger
                                     render={
                                       <Button
@@ -263,7 +270,7 @@ export function SchedulesPage() {
                                     }
                                   >
                                     {changingScheduleId ===
-                                    schedule.id
+                                      schedule.id
                                       ? "Actualizando..."
                                       : schedule.activo
                                         ? "Desactivar"

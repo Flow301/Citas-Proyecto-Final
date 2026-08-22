@@ -3,6 +3,7 @@ import { Route, Routes } from "react-router"
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute"
 import { RoleRoute } from "@/components/auth/RoleRoute"
 import { MainLayout } from "@/components/layout/MainLayout"
+import { useAuth } from "@/context/auth-context"
 
 function lazyNamed(importFunction, exportName) {
   return lazy(() =>
@@ -11,6 +12,11 @@ function lazyNamed(importFunction, exportName) {
     }))
   )
 }
+
+const PublicHomePage = lazyNamed(
+  () => import("@/pages/PublicHomePage"),
+  "PublicHomePage"
+)
 
 const DashboardPage = lazyNamed(
   () => import("@/pages/DashboardPage"),
@@ -157,6 +163,22 @@ const DailyAgendaPage = lazyNamed(
   "DailyAgendaPage"
 )
 
+function HomePage() {
+  const { user, loading } = useAuth()
+
+  if (loading) {
+    return (
+      <div className="flex min-h-[40vh] items-center justify-center">
+        <p className="text-sm text-muted-foreground">
+          Cargando...
+        </p>
+      </div>
+    )
+  }
+
+  return user ? <DashboardPage /> : <PublicHomePage />
+}
+
 function App() {
   return (
     <Suspense
@@ -172,15 +194,17 @@ function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/registro" element={<RegisterPage />} />
 
-        <Route
-          element={
-            <ProtectedRoute>
-              <MainLayout />
-            </ProtectedRoute>
-          }
-        >
-          <Route index element={<DashboardPage />} />
-          <Route path="/perfil" element={<ProfilePage />} />
+        <Route element={<MainLayout />}>
+
+          <Route index element={<HomePage />} />
+          <Route
+            path="/perfil"
+            element={
+              <ProtectedRoute>
+                <ProfilePage />
+              </ProtectedRoute>
+            }
+          />
           <Route path="/servicios" element={<ServicesPage />} />
 
           <Route
@@ -348,7 +372,11 @@ function App() {
 
           <Route
             path="/citas"
-            element={<AppointmentsPage />}
+            element={
+              <ProtectedRoute>
+                <AppointmentsPage />
+              </ProtectedRoute>
+            }
           />
 
           <Route
@@ -375,7 +403,11 @@ function App() {
 
           <Route
             path="/citas/:id"
-            element={<AppointmentDetailPage />}
+            element={
+              <ProtectedRoute>
+                <AppointmentDetailPage />
+              </ProtectedRoute>
+            }
           />
 
           <Route

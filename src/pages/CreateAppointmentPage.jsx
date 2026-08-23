@@ -33,19 +33,24 @@ const initialFormData = {
   observaciones: "",
 }
 
-function getCurrentDate() {
-  const currentDate = new Date()
-  const year = currentDate.getFullYear()
+function getMinimumAppointmentDate() {
+  const minimumDate = new Date()
+
+  minimumDate.setDate(minimumDate.getDate() + 1)
+
+  const year = minimumDate.getFullYear()
   const month = String(
-    currentDate.getMonth() + 1
+    minimumDate.getMonth() + 1
   ).padStart(2, "0")
-  const day = String(currentDate.getDate()).padStart(
-    2,
-    "0"
-  )
+  const day = String(
+    minimumDate.getDate()
+  ).padStart(2, "0")
 
   return `${year}-${month}-${day}`
 }
+
+const MINIMUM_APPOINTMENT_DATE =
+  getMinimumAppointmentDate()
 
 export function CreateAppointmentPage() {
   const navigate = useNavigate()
@@ -128,36 +133,36 @@ export function CreateAppointmentPage() {
   }, [])
 
   useEffect(() => {
-  if (!formData.servicioId) {
-    return undefined
-  }
+    if (!formData.servicioId) {
+      return undefined
+    }
 
-  let isActive = true
+    let isActive = true
 
-  getActiveEmployeesForService(formData.servicioId)
-    .then((response) => {
-      if (isActive) {
-        setEmployees(response.data ?? [])
-      }
-    })
-    .catch((requestError) => {
-      if (isActive) {
-        setErrors((currentErrors) => ({
-          ...currentErrors,
-          empleadoId: requestError.message,
-        }))
-      }
-    })
-    .finally(() => {
-      if (isActive) {
-        setLoadingEmployees(false)
-      }
-    })
+    getActiveEmployeesForService(formData.servicioId)
+      .then((response) => {
+        if (isActive) {
+          setEmployees(response.data ?? [])
+        }
+      })
+      .catch((requestError) => {
+        if (isActive) {
+          setErrors((currentErrors) => ({
+            ...currentErrors,
+            empleadoId: requestError.message,
+          }))
+        }
+      })
+      .finally(() => {
+        if (isActive) {
+          setLoadingEmployees(false)
+        }
+      })
 
-  return () => {
-    isActive = false
-  }
-}, [formData.servicioId])
+    return () => {
+      isActive = false
+    }
+  }, [formData.servicioId])
 
   useEffect(() => {
     if (!formData.empleadoId || !formData.fecha) {
@@ -315,9 +320,10 @@ export function CreateAppointmentPage() {
 
     if (!formData.fecha) {
       newErrors.fecha = "Selecciona una fecha."
-    } else if (formData.fecha < getCurrentDate()) {
+    } else if (
+      formData.fecha < MINIMUM_APPOINTMENT_DATE) {
       newErrors.fecha =
-        "La fecha no puede estar en el pasado."
+        "La fecha debe ser posterior al día de hoy."
     }
 
     if (!formData.horaInicio) {
@@ -408,9 +414,11 @@ export function CreateAppointmentPage() {
 
       navigate(
         appointmentId
-          ? `/citas/${appointmentId}`
+          ? `/citas/${appointmentId}?resultado=creada`
           : "/citas",
-        { replace: true }
+        {
+          replace: true,
+        }
       )
     } catch (requestError) {
       setErrors({
@@ -447,6 +455,7 @@ export function CreateAppointmentPage() {
       <AppointmentForm
         title="Registrar nueva cita"
         formData={formData}
+        minimumDate={MINIMUM_APPOINTMENT_DATE}
         clients={clients}
         services={services}
         employees={employees}

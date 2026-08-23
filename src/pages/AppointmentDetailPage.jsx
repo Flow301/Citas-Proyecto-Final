@@ -1,5 +1,10 @@
 import { useEffect, useState } from "react"
-import { Link, Navigate, useParams } from "react-router"
+import {
+    Link,
+    Navigate,
+    useParams,
+    useSearchParams,
+} from "react-router"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -125,7 +130,17 @@ async function verifyAppointmentAccess(user, appointmentId) {
 
 export function AppointmentDetailPage() {
     const { id } = useParams()
-    const { user } = useAuth()
+    const [searchParams] = useSearchParams()
+const { user } = useAuth()
+
+const result = searchParams.get("resultado")
+
+const successMessage =
+    result === "creada"
+        ? "La cita se registró correctamente."
+        : result === "actualizada"
+          ? "La cita se actualizó correctamente."
+          : ""
     const [appointment, setAppointment] = useState(null)
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState("")
@@ -380,6 +395,16 @@ export function AppointmentDetailPage() {
 
     return (
         <div className="space-y-6">
+            {successMessage && (
+                <div
+                    role="status"
+                    aria-live="polite"
+                    className="rounded-md border border-green-300 bg-green-50 p-4 text-sm font-medium text-green-800 dark:border-green-900 dark:bg-green-950/40 dark:text-green-300"
+                >
+                    {successMessage}
+                </div>
+            )}
+
             <div className="flex flex-wrap justify-between gap-3">
                 <Button
                     nativeButton={false}

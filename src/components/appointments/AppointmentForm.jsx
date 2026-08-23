@@ -72,6 +72,7 @@ export function AppointmentForm({
   appointmentId,
   title,
   formData,
+   minimumDate,
   clients,
   services,
   employees,
@@ -267,6 +268,7 @@ export function AppointmentForm({
             <Input
               id="fecha"
               type="date"
+              min={minimumDate}
               value={formData.fecha}
               onChange={(event) =>
                 onFieldChange("fecha", event.target.value)

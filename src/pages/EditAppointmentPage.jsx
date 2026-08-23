@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from "react"
 import {
   Link,
   Navigate,
-  useNavigate,
   useParams,
 } from "react-router"
 import { AppointmentForm } from "@/components/appointments/AppointmentForm"
@@ -38,19 +37,24 @@ const initialFormData = {
   observaciones: "",
 }
 
-function getCurrentDate() {
-  const currentDate = new Date()
-  const year = currentDate.getFullYear()
+function getMinimumAppointmentDate() {
+  const minimumDate = new Date()
+
+  minimumDate.setDate(minimumDate.getDate() + 1)
+
+  const year = minimumDate.getFullYear()
   const month = String(
-    currentDate.getMonth() + 1
+    minimumDate.getMonth() + 1
   ).padStart(2, "0")
-  const day = String(currentDate.getDate()).padStart(
-    2,
-    "0"
-  )
+  const day = String(
+    minimumDate.getDate()
+  ).padStart(2, "0")
 
   return `${year}-${month}-${day}`
 }
+
+const MINIMUM_APPOINTMENT_DATE =
+  getMinimumAppointmentDate()
 
 function formatTimeForInput(timeValue) {
   if (!timeValue) {
@@ -100,7 +104,6 @@ async function requestEditableAppointment(
 
 export function EditAppointmentPage() {
   const { id } = useParams()
-  const navigate = useNavigate()
   const { user } = useAuth()
   const [formData, setFormData] = useState(
     initialFormData
@@ -119,6 +122,8 @@ export function EditAppointmentPage() {
   const [loadingAgenda, setLoadingAgenda] =
     useState(false)
   const [submitting, setSubmitting] = useState(false)
+  const [successMessage, setSuccessMessage] =
+    useState("")
   const [accessDenied, setAccessDenied] =
     useState(false)
 
@@ -241,8 +246,8 @@ export function EditAppointmentPage() {
 
   useEffect(() => {
     if (!formData.empleadoId || !formData.fecha) {
-  return undefined
-}
+      return undefined
+    }
     let isActive = true
 
     Promise.all([
@@ -391,9 +396,11 @@ export function EditAppointmentPage() {
 
     if (!formData.fecha) {
       newErrors.fecha = "Selecciona una fecha."
-    } else if (formData.fecha < getCurrentDate()) {
+    } else if (
+      formData.fecha < MINIMUM_APPOINTMENT_DATE
+    ) {
       newErrors.fecha =
-        "La fecha no puede estar en el pasado."
+        "La fecha debe ser posterior al día de hoy."
     }
 
     if (!formData.horaInicio) {
@@ -429,9 +436,10 @@ export function EditAppointmentPage() {
 
     setSubmitting(true)
     setErrors({})
+    setSuccessMessage("")
 
     try {
-      const response = await updateAppointment(id, {
+      await updateAppointment(id, {
         clienteId: Number(formData.clienteId),
         empleadoId: Number(formData.empleadoId),
         servicioId: Number(formData.servicioId),
@@ -449,11 +457,9 @@ export function EditAppointmentPage() {
         adicionalIds: formData.adicionalIds.map(Number),
       })
 
-      const appointmentId = response.data?.id ?? id
-
-      navigate(`/citas/${appointmentId}`, {
-        replace: true,
-      })
+      setSuccessMessage(
+        "La cita se actualizó correctamente."
+      )
     } catch (requestError) {
       setErrors({
         form: requestError.message,
@@ -482,6 +488,24 @@ export function EditAppointmentPage() {
 
   return (
     <div className="space-y-6">
+      {successMessage && (
+        <div
+          role="status"
+          aria-live="polite"
+          className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-green-300 bg-green-50 p-4 text-sm font-medium text-green-800 dark:border-green-900 dark:bg-green-950/40 dark:text-green-300"
+        >
+          <span>{successMessage}</span>
+
+          <Button
+            nativeButton={false}
+            variant="outline"
+            render={<Link to={`/citas/${id}`} />}
+          >
+            Ver cita actualizada
+          </Button>
+        </div>
+      )}
+
       <Button
         nativeButton={false}
         variant="outline"
@@ -493,6 +517,7 @@ export function EditAppointmentPage() {
       <AppointmentForm
         title="Editar cita"
         formData={formData}
+        minimumDate={MINIMUM_APPOINTMENT_DATE}
         clients={clients}
         services={services}
         employees={employees}

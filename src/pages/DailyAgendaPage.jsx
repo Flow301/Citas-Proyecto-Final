@@ -54,13 +54,15 @@ function getFullName(user) {
 function getStatusClass(statusName) {
     const classes = {
         Pendiente:
-            "border-yellow-200 bg-yellow-100 text-yellow-800",
+            "border-yellow-200 bg-yellow-100 text-yellow-800 dark:border-yellow-800 dark:bg-yellow-950 dark:text-yellow-200",
         Confirmada:
-            "border-blue-200 bg-blue-100 text-blue-800",
+            "border-blue-200 bg-blue-100 text-blue-800 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-200",
+        "En proceso":
+            "border-purple-200 bg-purple-100 text-purple-800 dark:border-purple-800 dark:bg-purple-950 dark:text-purple-200",
         Finalizada:
-            "border-green-200 bg-green-100 text-green-800",
+            "border-green-200 bg-green-100 text-green-800 dark:border-green-800 dark:bg-green-950 dark:text-green-200",
         Cancelada:
-            "border-red-200 bg-red-100 text-red-800",
+            "border-red-200 bg-red-100 text-red-800 dark:border-red-800 dark:bg-red-950 dark:text-red-200",
     }
 
     return (
@@ -125,6 +127,26 @@ function addIntervalLimits(limits, interval) {
     }
 }
 
+function addHourlyScheduleLimits(limits, schedule) {
+    const start = timeToMinutes(schedule?.horaInicio)
+    const end = timeToMinutes(schedule?.horaFin)
+
+    if (start === null || end === null || start >= end) {
+        return
+    }
+
+    limits.add(start)
+    limits.add(end)
+
+    let nextLimit =
+        Math.floor(start / 60) * 60 + 60
+
+    while (nextLimit < end) {
+        limits.add(nextLimit)
+        nextLimit += 60
+    }
+}
+
 function buildAgendaSegments(agendaData) {
     const limits = new Set()
 
@@ -136,7 +158,7 @@ function buildAgendaSegments(agendaData) {
     schedules
         .filter((schedule) => schedule.activo !== false)
         .forEach((schedule) =>
-            addIntervalLimits(limits, schedule)
+            addHourlyScheduleLimits(limits, schedule)
         )
 
     generalRestrictions
@@ -150,19 +172,24 @@ function buildAgendaSegments(agendaData) {
         )
 
     employees.forEach((employee) => {
-        ;(employee.citas ?? []).forEach((appointment) =>
-            addIntervalLimits(limits, appointment)
-        )
-
-        ;(employee.restricciones ?? [])
+        ; (employee.citas ?? [])
             .filter(
-                (restriction) =>
-                    restriction.activo !== false &&
-                    !restriction.todoElDia
+                (appointment) =>
+                    !isCancelledAppointment(appointment)
             )
-            .forEach((restriction) =>
-                addIntervalLimits(limits, restriction)
+            .forEach((appointment) =>
+                addIntervalLimits(limits, appointment)
             )
+
+            ; (employee.restricciones ?? [])
+                .filter(
+                    (restriction) =>
+                        restriction.activo !== false &&
+                        !restriction.todoElDia
+                )
+                .forEach((restriction) =>
+                    addIntervalLimits(limits, restriction)
+                )
     })
 
     const orderedLimits = [...limits].sort(
@@ -207,6 +234,14 @@ function restrictionAffectsSegment(
         segment.end,
         start,
         end
+    )
+}
+
+function isCancelledAppointment(appointment) {
+    return (
+        appointment.estadoCita?.nombre
+            ?.trim()
+            .toLowerCase() === "cancelada"
     )
 }
 
@@ -290,8 +325,10 @@ function getAgendaCell(agendaData, employee, segment) {
 
     const appointment = (
         employee.citas ?? []
-    ).find((item) =>
-        appointmentAffectsSegment(item, segment)
+    ).find(
+        (item) =>
+            !isCancelledAppointment(item) &&
+            appointmentAffectsSegment(item, segment)
     )
 
     if (appointment) {
@@ -326,11 +363,11 @@ function getAgendaCell(agendaData, employee, segment) {
 function getAgendaCellClass(cellType) {
     const classes = {
         appointment:
-            "border-blue-200 bg-blue-50 text-blue-950",
+            "border-blue-200 bg-blue-50 text-blue-950 dark:border-blue-800 dark:bg-blue-950/50 dark:text-blue-100",
         restriction:
-            "border-red-200 bg-red-50 text-red-950",
+            "border-red-200 bg-red-50 text-red-950 dark:border-red-800 dark:bg-red-950/50 dark:text-red-100",
         available:
-            "border-green-200 bg-green-50 text-green-900",
+            "border-green-200 bg-green-50 text-green-900 dark:border-green-800 dark:bg-green-950/50 dark:text-green-100",
         closed:
             "border-muted bg-muted/50 text-muted-foreground",
     }
@@ -376,11 +413,16 @@ export function DailyAgendaPage() {
         const dailyAppointments = (
             agenda?.empleados ?? []
         ).flatMap((employee) =>
-            (employee.citas ?? []).map((appointment) => ({
-                ...appointment,
-                empleado:
-                    appointment.empleado ?? employee,
-            }))
+            (employee.citas ?? [])
+                .filter(
+                    (appointment) =>
+                        !isCancelledAppointment(appointment)
+                )
+                .map((appointment) => ({
+                    ...appointment,
+                    empleado:
+                        appointment.empleado ?? employee,
+                }))
         )
 
         return dailyAppointments.sort((first, second) =>
@@ -390,7 +432,7 @@ export function DailyAgendaPage() {
         )
     }, [agenda])
 
-        const employees = useMemo(
+    const employees = useMemo(
         () => agenda?.empleados ?? [],
         [agenda]
     )
@@ -460,7 +502,7 @@ export function DailyAgendaPage() {
                 </Card>
             )}
 
-                        {!loading && !error && (
+            {!loading && !error && (
                 <Card>
                     <CardHeader>
                         <CardTitle>
@@ -469,15 +511,15 @@ export function DailyAgendaPage() {
                         </CardTitle>
 
                         <div className="flex flex-wrap gap-3 text-sm">
-                            <span className="rounded-md border border-green-200 bg-green-50 px-2 py-1 text-green-900">
+                            <span className="rounded-md border border-green-200 bg-green-50 px-2 py-1 text-green-900 dark:border-green-800 dark:bg-green-950/50 dark:text-green-100">
                                 Disponible
                             </span>
 
-                            <span className="rounded-md border border-blue-200 bg-blue-50 px-2 py-1 text-blue-950">
+                            <span className="rounded-md border border-blue-200 bg-blue-50 px-2 py-1 text-blue-950 dark:border-blue-800 dark:bg-blue-950/50 dark:text-blue-100">
                                 Cita
                             </span>
 
-                            <span className="rounded-md border border-red-200 bg-red-50 px-2 py-1 text-red-950">
+                            <span className="rounded-md border border-red-200 bg-red-50 px-2 py-1 text-red-950 dark:border-red-800 dark:bg-red-950/50 dark:text-red-100">
                                 Restricción
                             </span>
 
@@ -560,7 +602,7 @@ export function DailyAgendaPage() {
                                                             )}`}
                                                         >
                                                             {cell.type ===
-                                                            "appointment" ? (
+                                                                "appointment" ? (
                                                                 <Link
                                                                     to={`/citas/${cell.appointment.id}`}
                                                                     className="block space-y-2"
@@ -627,11 +669,11 @@ export function DailyAgendaPage() {
 
                                                                     {cell.type ===
                                                                         "restriction" && (
-                                                                        <p className="text-xs">
-                                                                            No
-                                                                            disponible
-                                                                        </p>
-                                                                    )}
+                                                                            <p className="text-xs">
+                                                                                No
+                                                                                disponible
+                                                                            </p>
+                                                                        )}
                                                                 </div>
                                                             )}
                                                         </div>

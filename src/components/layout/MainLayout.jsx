@@ -34,6 +34,11 @@ const navigationItems = [
     path: "/horarios",
   },
   {
+    label: "Disponibilidad",
+    path: "/disponibilidad",
+    roles: authenticatedRoles,
+  },
+  {
     label: "Adicionales",
     path: "/servicios-adicionales",
   },

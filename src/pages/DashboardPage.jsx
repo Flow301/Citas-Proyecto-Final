@@ -201,7 +201,7 @@ export function DashboardPage() {
 
   return (
     <div className="space-y-16 pb-8">
-      <section className="relative overflow-hidden rounded-3xl border bg-gradient-to-br from-primary via-primary to-primary/80 px-6 py-12 text-primary-foreground shadow-lg sm:px-10 lg:px-14 lg:py-16">
+      <section className="relative overflow-hidden rounded-3xl border bg-linear-to-br from-primary via-primary to-primary/80 px-6 py-12 text-primary-foreground shadow-lg sm:px-10 lg:px-14 lg:py-16">
         <div
           className="absolute -right-20 -top-24 size-72 rounded-full bg-white/10"
           aria-hidden="true"

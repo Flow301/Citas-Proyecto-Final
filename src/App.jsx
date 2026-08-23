@@ -147,6 +147,11 @@ const DailyAgendaPage = lazyNamed(
   "DailyAgendaPage"
 )
 
+const AvailabilityPage = lazyNamed(
+  () => import("@/pages/AvailabilityPage"),
+  "AvailabilityPage"
+)
+
 function App() {
   return (
     <Suspense
@@ -178,6 +183,15 @@ function App() {
           <Route
             path="/servicios-adicionales"
             element={<AdditionalServicesPage />}
+          />
+
+          <Route
+            path="/disponibilidad"
+            element={
+              <ProtectedRoute>
+                <AvailabilityPage />
+              </ProtectedRoute>
+            }
           />
 
           <Route

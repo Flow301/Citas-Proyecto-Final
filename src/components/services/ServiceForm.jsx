@@ -17,9 +17,7 @@ const allowedImageTypes = [
   "image/png",
   "image/webp",
 ]
-// TEMPORAL: cambiar a true cuando el API corrija
-// la generación de nombres de imágenes.
-const REQUIRE_SERVICE_IMAGE = false
+const REQUIRE_SERVICE_IMAGE = true
 
 const emptyValues = {
   nombre: "",

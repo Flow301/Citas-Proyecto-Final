@@ -250,7 +250,7 @@ luis.empleado@tutorias.test
 
 ```text
 Correo: daniela.cliente@tutorias.test
-Contraseña: valor configurado en SEED_USER_PASSWORD
+Contraseña: Pruebas123
 ```
 
 También se genera:

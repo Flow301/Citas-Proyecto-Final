@@ -358,17 +358,33 @@ export function AppointmentsPage() {
                     </div>
                   </dl>
 
-                  <Button
-                    nativeButton={false}
-                    variant="outline"
-                    render={
-                      <Link
-                        to={`/citas/${appointment.id}`}
-                      />
-                    }
-                  >
-                    Ver detalle
-                  </Button>
+                  <div className="flex flex-wrap gap-3">
+                    <Button
+                      nativeButton={false}
+                      variant="outline"
+                      render={
+                        <Link
+                          to={`/citas/${appointment.id}`}
+                        />
+                      }
+                    >
+                      Ver detalle
+                    </Button>
+
+                    {canCreateAppointment &&
+                      appointment.estadoCita?.permiteEdicion === true && (
+                        <Button
+                          nativeButton={false}
+                          render={
+                            <Link
+                              to={`/citas/${appointment.id}/editar`}
+                            />
+                          }
+                        >
+                          Editar
+                        </Button>
+                      )}
+                  </div>
                 </CardContent>
               </Card>
             ))}

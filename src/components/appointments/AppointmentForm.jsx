@@ -7,6 +7,15 @@ import {
 } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { Checkbox } from "@/components/ui/checkbox"
 import { useMemo } from "react"
 import { calculateAvailableTimeSlots } from "@/lib/appointmentCalculations"
 
@@ -105,6 +114,21 @@ export function AppointmentForm({
     ]
   )
 
+  const selectedClient = clients.find(
+    (client) =>
+      String(client.id) === String(formData.clienteId)
+  )
+
+  const selectedService = services.find(
+    (service) =>
+      String(service.id) === String(formData.servicioId)
+  )
+
+  const selectedEmployee = employees.find(
+    (employee) =>
+      String(employee.id) === String(formData.empleadoId)
+  )
+
   return (
     <form onSubmit={onSubmit} className="space-y-6">
       <Card>
@@ -119,26 +143,35 @@ export function AppointmentForm({
               <span className="text-destructive">*</span>
             </Label>
 
-            <select
-              id="clienteId"
+            <Select
               value={formData.clienteId}
-              onChange={(event) =>
-                onFieldChange(
-                  "clienteId",
-                  event.target.value
-                )
+              onValueChange={(value) =>
+                onFieldChange("clienteId", value)
               }
-              className="h-10 w-full rounded-md border bg-background px-3 text-sm"
-              aria-invalid={Boolean(errors.clienteId)}
             >
-              <option value="">Selecciona un cliente</option>
+              <SelectTrigger
+                id="clienteId"
+                className="w-full"
+                aria-invalid={Boolean(errors.clienteId)}
+              >
+                <SelectValue>
+                  {selectedClient
+                    ? getFullName(selectedClient)
+                    : "Selecciona un cliente"}
+                </SelectValue>
+              </SelectTrigger>
 
-              {clients.map((client) => (
-                <option key={client.id} value={client.id}>
-                  {getFullName(client)}
-                </option>
-              ))}
-            </select>
+              <SelectContent>
+                {clients.map((client) => (
+                  <SelectItem
+                    key={client.id}
+                    value={String(client.id)}
+                  >
+                    {getFullName(client)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
             <FieldError error={errors.clienteId} />
           </div>
@@ -149,26 +182,34 @@ export function AppointmentForm({
               <span className="text-destructive">*</span>
             </Label>
 
-            <select
-              id="servicioId"
+            <Select
               value={formData.servicioId}
-              onChange={(event) =>
-                onFieldChange(
-                  "servicioId",
-                  event.target.value
-                )
+              onValueChange={(value) =>
+                onFieldChange("servicioId", value)
               }
-              className="h-10 w-full rounded-md border bg-background px-3 text-sm"
-              aria-invalid={Boolean(errors.servicioId)}
             >
-              <option value="">Selecciona un servicio</option>
+              <SelectTrigger
+                id="servicioId"
+                className="w-full"
+                aria-invalid={Boolean(errors.servicioId)}
+              >
+                <SelectValue>
+                  {selectedService?.nombre ||
+                    "Selecciona un servicio"}
+                </SelectValue>
+              </SelectTrigger>
 
-              {services.map((service) => (
-                <option key={service.id} value={service.id}>
-                  {service.nombre}
-                </option>
-              ))}
-            </select>
+              <SelectContent>
+                {services.map((service) => (
+                  <SelectItem
+                    key={service.id}
+                    value={String(service.id)}
+                  >
+                    {service.nombre}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
             <FieldError error={errors.servicioId} />
           </div>
@@ -179,36 +220,40 @@ export function AppointmentForm({
               <span className="text-destructive">*</span>
             </Label>
 
-            <select
-              id="empleadoId"
+            <Select
               value={formData.empleadoId}
-              onChange={(event) =>
-                onFieldChange(
-                  "empleadoId",
-                  event.target.value
-                )
+              onValueChange={(value) =>
+                onFieldChange("empleadoId", value)
               }
               disabled={
                 !formData.servicioId || loadingEmployees
               }
-              className="h-10 w-full rounded-md border bg-background px-3 text-sm disabled:opacity-50"
-              aria-invalid={Boolean(errors.empleadoId)}
             >
-              <option value="">
-                {loadingEmployees
-                  ? "Cargando empleados..."
-                  : "Selecciona un empleado"}
-              </option>
+              <SelectTrigger
+                id="empleadoId"
+                className="w-full"
+                aria-invalid={Boolean(errors.empleadoId)}
+              >
+                <SelectValue>
+                  {loadingEmployees
+                    ? "Cargando empleados..."
+                    : selectedEmployee
+                      ? getFullName(selectedEmployee.usuario)
+                      : "Selecciona un empleado"}
+                </SelectValue>
+              </SelectTrigger>
 
-              {employees.map((employee) => (
-                <option
-                  key={employee.id}
-                  value={employee.id}
-                >
-                  {getFullName(employee.usuario)}
-                </option>
-              ))}
-            </select>
+              <SelectContent>
+                {employees.map((employee) => (
+                  <SelectItem
+                    key={employee.id}
+                    value={String(employee.id)}
+                  >
+                    {getFullName(employee.usuario)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
             <FieldError error={errors.empleadoId} />
           </div>
@@ -238,38 +283,43 @@ export function AppointmentForm({
               <span className="text-destructive">*</span>
             </Label>
 
-            <select
-              id="horaInicio"
+            <Select
               value={formData.horaInicio}
-              onChange={(event) =>
-                onFieldChange(
-                  "horaInicio",
-                  event.target.value
-                )
+              onValueChange={(value) =>
+                onFieldChange("horaInicio", value)
               }
               disabled={
                 !formData.servicioId ||
                 !formData.empleadoId ||
                 !formData.fecha ||
-                loadingAgenda
+                loadingAgenda ||
+                availableTimeSlots.length === 0
               }
-              className="h-10 w-full rounded-md border bg-background px-3 text-sm disabled:opacity-50"
-              aria-invalid={Boolean(errors.horaInicio)}
             >
-              <option value="">
-                {loadingAgenda
-                  ? "Calculando horarios..."
-                  : availableTimeSlots.length === 0
-                    ? "No hay horarios disponibles"
-                    : "Selecciona una hora"}
-              </option>
+              <SelectTrigger
+                id="horaInicio"
+                className="w-full"
+                aria-invalid={Boolean(errors.horaInicio)}
+              >
+                <SelectValue>
+                  {loadingAgenda
+                    ? "Calculando horarios..."
+                    : formData.horaInicio
+                      ? formData.horaInicio
+                      : availableTimeSlots.length === 0
+                        ? "No hay horarios disponibles"
+                        : "Selecciona una hora"}
+                </SelectValue>
+              </SelectTrigger>
 
-              {availableTimeSlots.map((time) => (
-                <option key={time} value={time}>
-                  {time}
-                </option>
-              ))}
-            </select>
+              <SelectContent>
+                {availableTimeSlots.map((time) => (
+                  <SelectItem key={time} value={time}>
+                    {time}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
             <FieldError error={errors.horaInicio} />
           </div>
@@ -312,18 +362,17 @@ export function AppointmentForm({
                     key={additional.id}
                     className="flex cursor-pointer items-start gap-3 rounded-md border p-3"
                   >
-                    <input
-                      type="checkbox"
+                    <Checkbox
                       checked={formData.adicionalIds.includes(
                         additionalId
                       )}
-                      onChange={(event) =>
+                      onCheckedChange={(checked) =>
                         onAdditionalChange(
                           additionalId,
-                          event.target.checked
+                          checked === true
                         )
                       }
-                      className="mt-1 size-4"
+                      className="mt-1"
                     />
 
                     <span className="flex-1">
@@ -512,7 +561,7 @@ export function AppointmentForm({
               Observaciones
             </Label>
 
-            <textarea
+            <Textarea
               id="observaciones"
               value={formData.observaciones}
               onChange={(event) =>
@@ -523,8 +572,8 @@ export function AppointmentForm({
               }
               maxLength={500}
               rows={4}
-              className="w-full rounded-md border bg-background px-3 py-2 text-sm"
               placeholder="Información adicional para la cita"
+              aria-invalid={Boolean(errors.observaciones)}
             />
 
             <div className="flex justify-between gap-4">

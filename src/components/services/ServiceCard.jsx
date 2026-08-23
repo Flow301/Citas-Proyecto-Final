@@ -9,6 +9,7 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { getServiceImageUrl } from "@/services/serviceService"
+import { useAuth } from "@/context/auth-context"
 
 function formatPrice(price) {
   return new Intl.NumberFormat("es-CR", {
@@ -18,7 +19,10 @@ function formatPrice(price) {
 }
 
 export function ServiceCard({ service, specialtyName }) {
+  const { user } = useAuth()
   const imageUrl = getServiceImageUrl(service.imagen)
+  const isAdministrator =
+    user?.rol?.nombre === "Administrador"
 
   return (
     <Card className="overflow-hidden">
@@ -70,15 +74,27 @@ export function ServiceCard({ service, specialtyName }) {
         </dl>
       </CardContent>
 
-      <CardFooter>
+      <CardFooter className="flex gap-3">
         <Button
-          className="w-full"
+          className="flex-1"
           variant="outline"
           render={<Link to={`/servicios/${service.id}`} />}
           nativeButton={false}
         >
           Ver detalle
         </Button>
+
+        {isAdministrator && (
+          <Button
+            className="flex-1"
+            render={
+              <Link to={`/servicios/${service.id}/editar`} />
+            }
+            nativeButton={false}
+          >
+            Editar
+          </Button>
+        )}
       </CardFooter>
     </Card>
   )

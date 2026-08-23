@@ -1,6 +1,7 @@
 import { Link } from "react-router"
 import { ActiveStatusBadge } from "@/components/common/ActiveStatusBadge"
 import { Button } from "@/components/ui/button"
+import { useAuth } from "@/context/auth-context"
 import {
   Card,
   CardContent,
@@ -17,6 +18,10 @@ function formatPrice(price) {
 }
 
 export function AdditionalServiceCard({ additional }) {
+  const { user } = useAuth()
+  const isAdministrator =
+    user?.rol?.nombre === "Administrador"
+
   return (
     <Card>
       <CardHeader>
@@ -45,10 +50,10 @@ export function AdditionalServiceCard({ additional }) {
         </div>
       </CardContent>
 
-      <CardFooter>
+      <CardFooter className="flex gap-3">
         <Button
           nativeButton={false}
-          className="w-full"
+          className="flex-1"
           variant="outline"
           render={
             <Link
@@ -58,6 +63,20 @@ export function AdditionalServiceCard({ additional }) {
         >
           Ver detalle
         </Button>
+
+        {isAdministrator && (
+          <Button
+            nativeButton={false}
+            className="flex-1"
+            render={
+              <Link
+                to={`/servicios-adicionales/${additional.id}/editar`}
+              />
+            }
+          >
+            Editar
+          </Button>
+        )}
       </CardFooter>
     </Card>
   )

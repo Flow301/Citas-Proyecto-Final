@@ -1,6 +1,7 @@
 import { Link } from "react-router"
 import { ActiveStatusBadge } from "@/components/common/ActiveStatusBadge"
 import { Button } from "@/components/ui/button"
+import { useAuth } from "@/context/auth-context"
 import {
   Card,
   CardContent,
@@ -27,6 +28,10 @@ export function EmployeeCard({
   employee,
   specialtyName,
 }) {
+  const { user } = useAuth()
+  const isAdministrator =
+    user?.rol?.nombre === "Administrador"
+
   const fullName = getFullName(employee.usuario)
   const serviceCount = employee.servicios?.length || 0
 
@@ -82,15 +87,27 @@ export function EmployeeCard({
         </dl>
       </CardContent>
 
-      <CardFooter>
+      <CardFooter className="flex gap-3">
         <Button
           nativeButton={false}
-          className="w-full"
+          className="flex-1"
           variant="outline"
           render={<Link to={`/empleados/${employee.id}`} />}
         >
           Ver detalle
         </Button>
+
+        {isAdministrator && (
+          <Button
+            nativeButton={false}
+            className="flex-1"
+            render={
+              <Link to={`/empleados/${employee.id}/editar`} />
+            }
+          >
+            Editar
+          </Button>
+        )}
       </CardFooter>
     </Card>
   )

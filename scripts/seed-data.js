@@ -69,6 +69,7 @@ const employeeProfiles = [
   {
     correo: "andrea.empleada@tutorias.test",
     codigoEmpleado: "TUT-MAT-001",
+    especialidad: "Ciencias Exactas",
     descripcion:
       "Tutora especializada en matemática, cálculo y física.",
     servicios: [
@@ -80,24 +81,25 @@ const employeeProfiles = [
   {
     correo: "carlos.empleado@tutorias.test",
     codigoEmpleado: "TUT-TEC-002",
+    especialidad: "Tecnología",
     descripcion:
-      "Tutor especializado en programación, matemática y cálculo.",
+      "Tutor especializado en programación, bases de datos y desarrollo web.",
     servicios: [
       "Tutoría de Programación",
-      "Tutoría de Matemática",
-      "Tutoría de Cálculo",
+      "Tutoría de Bases de Datos",
+      "Tutoría de Desarrollo Web",
     ],
   },
   {
     correo: "mariana.empleada@tutorias.test",
     codigoEmpleado: "TUT-GEN-003",
+    especialidad: "Idiomas",
     descripcion:
-      "Tutora de inglés, física y materias académicas generales.",
+      "Tutora especializada en inglés, gramática y conversación.",
     servicios: [
       "Tutoría de Inglés",
-      "Tutoría de Física",
-      "Tutoría de Matemática",
-      "Tutoría de Cálculo",
+      "Tutoría de Gramática Inglesa",
+      "Tutoría de Conversación en Inglés",
     ],
   },
 ]
@@ -256,7 +258,7 @@ const appointments = [
     estadoFinal: "Cancelada",
     clienteCorreo: "daniela.cliente@tutorias.test",
     codigoEmpleado: "TUT-TEC-002",
-    servicio: "Tutoría de Matemática",
+    servicio: "Tutoría de Bases de Datos",
     adicionales: ["Revisión de tarea"],
     fecha: "2026-10-08",
     horaInicio: "14:00",
@@ -306,7 +308,7 @@ const appointments = [
     estadoFinal: "Confirmada",
     clienteCorreo: "daniela.cliente@tutorias.test",
     codigoEmpleado: "TUT-TEC-002",
-    servicio: "Tutoría de Matemática",
+    servicio: "Tutoría de Desarrollo Web",
     adicionales: ["Resumen digital"],
     fecha: "2026-10-14",
     horaInicio: "08:00",
@@ -316,7 +318,7 @@ const appointments = [
     estadoFinal: "Confirmada",
     clienteCorreo: "sebastian.cliente@tutorias.test",
     codigoEmpleado: "TUT-GEN-003",
-    servicio: "Tutoría de Física",
+    servicio: "Tutoría de Gramática Inglesa",
     adicionales: ["Material impreso"],
     fecha: "2026-10-14",
     horaInicio: "10:00",
@@ -346,6 +348,7 @@ const appointments = [
 const services = [
   {
     nombre: "Tutoría de Matemática",
+    especialidad: "Ciencias Exactas",
     descripcion:
       "Tutoría personalizada de matemática general para estudiantes.",
     precioBase: 10000,
@@ -354,6 +357,7 @@ const services = [
   },
   {
     nombre: "Tutoría de Cálculo",
+    especialidad: "Ciencias Exactas",
     descripcion:
       "Apoyo académico en límites, derivadas, integrales y aplicaciones.",
     precioBase: 12000,
@@ -362,6 +366,7 @@ const services = [
   },
   {
     nombre: "Tutoría de Programación",
+    especialidad: "Tecnología",
     descripcion:
       "Tutoría práctica de lógica, algoritmos y programación básica.",
     precioBase: 15000,
@@ -370,6 +375,7 @@ const services = [
   },
   {
     nombre: "Tutoría de Física",
+    especialidad: "Ciencias Exactas",
     descripcion:
       "Apoyo en mecánica, movimiento, fuerzas, energía y resolución de problemas.",
     precioBase: 12000,
@@ -378,8 +384,45 @@ const services = [
   },
   {
     nombre: "Tutoría de Inglés",
+    especialidad: "Idiomas",
     descripcion:
       "Práctica guiada de gramática, vocabulario y conversación en inglés.",
+    precioBase: 10000,
+    duracionMinutos: 60,
+    imagenArchivo: "ingles.jpg",
+  },
+    {
+    nombre: "Tutoría de Bases de Datos",
+    especialidad: "Tecnología",
+    descripcion:
+      "Tutoría práctica sobre diseño, consultas SQL y administración básica de bases de datos.",
+    precioBase: 15000,
+    duracionMinutos: 90,
+    imagenArchivo: "programacion.jpg",
+  },
+  {
+    nombre: "Tutoría de Desarrollo Web",
+    especialidad: "Tecnología",
+    descripcion:
+      "Tutoría de desarrollo web con HTML, CSS, JavaScript y fundamentos de aplicaciones modernas.",
+    precioBase: 15000,
+    duracionMinutos: 90,
+    imagenArchivo: "programacion.jpg",
+  },
+  {
+    nombre: "Tutoría de Gramática Inglesa",
+    especialidad: "Idiomas",
+    descripcion:
+      "Tutoría enfocada en estructuras gramaticales, escritura y uso correcto del idioma inglés.",
+    precioBase: 10000,
+    duracionMinutos: 60,
+    imagenArchivo: "ingles.jpg",
+  },
+  {
+    nombre: "Tutoría de Conversación en Inglés",
+    especialidad: "Idiomas",
+    descripcion:
+      "Práctica guiada de pronunciación, comprensión y conversación cotidiana en inglés.",
     precioBase: 10000,
     duracionMinutos: 60,
     imagenArchivo: "ingles.jpg",
@@ -749,50 +792,43 @@ async function seedServices() {
   const existingServices = servicesResponse.data || []
   const specialties = specialtiesResponse.data || []
 
-  const generalSpecialty =
-    specialties.find(
-      (specialty) => specialty.nombre === "General"
-    ) || specialties[0]
-
-  if (!generalSpecialty) {
-    throw new Error(
-      "No existe ninguna especialidad para crear servicios."
-    )
-  }
-
   for (const service of services) {
     const {
       imagenArchivo,
+      especialidad,
       ...serviceData
     } = service
+
+    const selectedSpecialty = specialties.find(
+      (item) => item.nombre === especialidad
+    )
+
+    if (!selectedSpecialty) {
+      throw new Error(
+        `No se encontró la especialidad "${especialidad}" para el servicio "${service.nombre}".`
+      )
+    }
 
     const existingService = existingServices.find(
       (item) => item.nombre === service.nombre
     )
 
-    if (
-      existingService &&
-      existingService.imagen
-    ) {
+    let imageFileName =
+      existingService?.imagen ?? null
+
+    if (!imageFileName) {
       console.log(
-        `- Servicio con imagen existente: ${service.nombre}`
+        `Subiendo imagen: ${imagenArchivo}`
       )
-      continue
+
+      imageFileName =
+        await uploadSeedImage(imagenArchivo)
     }
-
-    console.log(
-      `Subiendo imagen: ${imagenArchivo}`
-    )
-
-    const uploadedFileName =
-      await uploadSeedImage(imagenArchivo)
 
     const requestData = {
       ...serviceData,
-      especialidadId:
-        existingService?.especialidadId ??
-        generalSpecialty.id,
-      imagen: uploadedFileName,
+      especialidadId: selectedSpecialty.id,
+      imagen: imageFileName,
     }
 
     if (existingService) {
@@ -805,7 +841,7 @@ async function seedServices() {
       )
 
       console.log(
-        `✓ Imagen agregada al servicio: ${service.nombre}`
+        `✓ Servicio actualizado: ${service.nombre} → ${especialidad}`
       )
 
       continue
@@ -817,10 +853,11 @@ async function seedServices() {
     })
 
     console.log(
-      `✓ Servicio creado con imagen: ${service.nombre}`
+      `✓ Servicio creado: ${service.nombre} → ${especialidad}`
     )
   }
 }
+
 
 async function seedAdditionals() {
   console.log("\nServicios adicionales")
@@ -930,25 +967,19 @@ async function seedEmployees() {
     }),
   ])
 
-  const employeeUsersFromApi = usersResponse.data || []
-  const availableServices = servicesResponse.data || []
-  const specialties = specialtiesResponse.data || []
-  const existingEmployees = employeesResponse.data || []
-
-  const generalSpecialty =
-    specialties.find(
-      (specialty) => specialty.nombre === "General"
-    ) || specialties[0]
-
-  if (!generalSpecialty) {
-    throw new Error(
-      "No existe ninguna especialidad para crear empleados."
-    )
-  }
+  const employeeUsersFromApi =
+    usersResponse.data || []
+  const availableServices =
+    servicesResponse.data || []
+  const specialties =
+    specialtiesResponse.data || []
+  const existingEmployees =
+    employeesResponse.data || []
 
   for (const employeeProfile of employeeProfiles) {
     const user = employeeUsersFromApi.find(
-      (item) => item.correo === employeeProfile.correo
+      (item) =>
+        item.correo === employeeProfile.correo
     )
 
     if (!user) {
@@ -957,6 +988,35 @@ async function seedEmployees() {
       )
     }
 
+    const selectedSpecialty = specialties.find(
+      (specialty) =>
+        specialty.nombre ===
+        employeeProfile.especialidad
+    )
+
+    if (!selectedSpecialty) {
+      throw new Error(
+        `No se encontró la especialidad "${employeeProfile.especialidad}" para ${employeeProfile.codigoEmpleado}.`
+      )
+    }
+
+    const assignedServices =
+      employeeProfile.servicios.map(
+        (serviceName) => {
+          const service = availableServices.find(
+            (item) => item.nombre === serviceName
+          )
+
+          if (!service) {
+            throw new Error(
+              `No se encontró el servicio "${serviceName}". Ejecuta primero: npm run seed -- servicios`
+            )
+          }
+
+          return service.id
+        }
+      )
+
     const existingEmployee = existingEmployees.find(
       (employee) =>
         employee.usuarioId === user.id ||
@@ -964,42 +1024,38 @@ async function seedEmployees() {
           employeeProfile.codigoEmpleado
     )
 
+    const requestData = {
+      usuarioId: user.id,
+      especialidadId: selectedSpecialty.id,
+      codigoEmpleado:
+        employeeProfile.codigoEmpleado,
+      descripcion: employeeProfile.descripcion,
+      servicioIds: assignedServices,
+    }
+
     if (existingEmployee) {
-      console.log(
-        `- Empleado existente: ${employeeProfile.codigoEmpleado}`
+      await apiRequest(
+        `/empleados/${existingEmployee.id}`,
+        {
+          method: "PUT",
+          body: JSON.stringify(requestData),
+        }
       )
+
+      console.log(
+        `✓ Empleado actualizado: ${employeeProfile.codigoEmpleado} → ${employeeProfile.especialidad}`
+      )
+
       continue
     }
 
-    const assignedServices = employeeProfile.servicios.map(
-      (serviceName) => {
-        const service = availableServices.find(
-          (item) => item.nombre === serviceName
-        )
-
-        if (!service) {
-          throw new Error(
-            `No se encontró el servicio "${serviceName}". Ejecuta primero: npm run seed -- servicios`
-          )
-        }
-
-        return service.id
-      }
-    )
-
     await apiRequest("/empleados", {
       method: "POST",
-      body: JSON.stringify({
-        usuarioId: user.id,
-        especialidadId: generalSpecialty.id,
-        codigoEmpleado: employeeProfile.codigoEmpleado,
-        descripcion: employeeProfile.descripcion,
-        servicioIds: assignedServices,
-      }),
+      body: JSON.stringify(requestData),
     })
 
     console.log(
-      `✓ Empleado creado: ${employeeProfile.codigoEmpleado}`
+      `✓ Empleado creado: ${employeeProfile.codigoEmpleado} → ${employeeProfile.especialidad}`
     )
   }
 }

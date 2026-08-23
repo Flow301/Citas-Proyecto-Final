@@ -143,6 +143,15 @@ http://localhost:5173
 
 El seed se ejecuta desde la raíz del frontend, no desde la carpeta de la API.
 
+### Preparar las especialidades
+
+La API solamente permite consultar las especialidades, por lo que estas deben cargarse directamente en MySQL antes de ejecutar el seed principal.
+
+Abrir y ejecutar en MySQL Workbench el archivo:
+
+```text
+scripts/seed-specialties.sql
+
 Antes de ejecutarlo:
 
 1. Iniciar MySQL.
